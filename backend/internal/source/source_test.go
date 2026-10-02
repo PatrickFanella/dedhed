@@ -47,3 +47,18 @@ func TestAudienceBehindSoundboardIsNotSoundboard(t *testing.T) {
 		t.Fatal(r.Kind, err)
 	}
 }
+
+func TestAlternateRecordingsAndMissingMetadata(t *testing.T) {
+	raw := []byte(`{"metadata":{"creator":"Grateful Dead","date":"1977-05-08","source":"AUD"},"files":[{"name":"track01.mp3","format":"VBR MP3","length":"10.5","size":"50"}]}`)
+	a, err := Normalize("first-recording", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := Normalize("alternate-recording", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID == b.ID || a.ConcertID != b.ConcertID || a.Venue != "" || len(a.Sets) != 0 || len(a.Warnings) == 0 {
+		t.Fatal("alternate identity or absent metadata changed", a, b)
+	}
+}

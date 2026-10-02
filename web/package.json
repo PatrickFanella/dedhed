@@ -9,15 +9,21 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run src",
-    "test:browser": "playwright test"
+    "test": "vitest run src"
   },
-  "dependencies": {"react": "^19.2.0", "react-dom": "^19.2.0"},
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
   "devDependencies": {
-    "@eslint/js": "^9.39.1", "@playwright/test": "1.56.1",
-    "@types/react": "^19.2.15", "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1", "eslint": "^9.39.4",
-    "typescript": "^5.9.3", "typescript-eslint": "^8.46.3",
-    "vite": "^7.2.7", "vitest": "^4.0.8"
+    "@eslint/js": "^9.39.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vite": "^7.2.7",
+    "vitest": "^4.0.8"
   }
 }

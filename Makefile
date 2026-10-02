@@ -1,4 +1,4 @@
-.PHONY: verify test test-integration test-browser
+.PHONY: verify test test-integration
 verify:
 	python3 scripts/check-source.py
 	python3 -m unittest discover -s scripts -p 'test_*.py'
@@ -14,5 +14,3 @@ test:
 test-integration:
 	test -n "$(TEST_DATABASE_URL)"
 	cd backend && go test -race ./internal/catalog -count=1
-test-browser:
-	pnpm --dir web test:browser

@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -178,10 +179,14 @@ func (d *DB) Review(ctx context.Context, id string, review music.Review) error {
 	return err
 }
 func (d *DB) Media(ctx context.Context, id, name, sha string, r *music.Recording) error {
-	if len(sha) != 64 || filepath.Base(name) != name {
+	_, hashErr := hex.DecodeString(sha)
+	if len(sha) != 64 || hashErr != nil || name == "." || name == "" || filepath.Base(name) != name {
 		return fmt.Errorf("invalid media identity")
 	}
 	if r != nil {
+		if r.ID != id {
+			return fmt.Errorf("playback identity differs from recording")
+		}
 		if err := r.Validate(); err != nil {
 			return err
 		}
@@ -189,10 +194,16 @@ func (d *DB) Media(ctx context.Context, id, name, sha string, r *music.Recording
 		if err != nil {
 			return err
 		}
-		_, err = d.Pool.Exec(ctx, `UPDATE recordings SET media=$2,media_sha256=$3,playback=$4,updated_at=now() WHERE id=$1`, id, name, sha, b)
+		result, err := d.Pool.Exec(ctx, `UPDATE recordings SET media=$2,media_sha256=$3,playback=$4,updated_at=now() WHERE id=$1`, id, name, sha, b)
+		if err == nil && result.RowsAffected() != 1 {
+			return fmt.Errorf("recording missing")
+		}
 		return err
 	}
-	_, err := d.Pool.Exec(ctx, `UPDATE recordings SET media=$2,media_sha256=$3,updated_at=now() WHERE id=$1`, id, name, sha)
+	result, err := d.Pool.Exec(ctx, `UPDATE recordings SET media=$2,media_sha256=$3,playback=NULL,updated_at=now() WHERE id=$1`, id, name, sha)
+	if err == nil && result.RowsAffected() != 1 {
+		return fmt.Errorf("recording missing")
+	}
 	return err
 }
 func (d *DB) SaveSchedule(ctx context.Context, s music.Schedule) error {
