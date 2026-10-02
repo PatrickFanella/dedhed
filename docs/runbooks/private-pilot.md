@@ -117,3 +117,23 @@ browser checks, real audio audition, sustained playback, and recovery separate.
 Rollback stops only the task-owned API/frontend processes and retains the private
 DB/media/backup. Restore into a new destination before switching consumers.
 Public release is tracked by issue #15 and is outside private qualification.
+
+## Sustained delivery observation
+
+A real-time HTTP decode checks sustained server delivery separately from browser
+playback. Use a new progress/error/output path under private evidence storage:
+
+```sh
+ffmpeg -hide_banner -v warning -re -i http://127.0.0.1:API_PORT/api/audio/ITEM -stats_period 10 -progress PROGRESS_FILE -f null - 2> ERROR_FILE
+python3 scripts/observe-pilot.py --api http://127.0.0.1:API_PORT --progress PROGRESS_FILE --errors ERROR_FILE --expected-duration MEASURED_SECONDS --output NEW_REPORT_JSON
+```
+
+Run the observer while the decoder runs. It records station/readiness responses
+and decoder progress every 15 seconds. Its success requires completed duration,
+no decoder warnings/errors, and no observed API failures. It does not prove
+speaker output, browser buffering, listener synchronization, or human fidelity.
+The observer rejects external API targets and existing report destinations.
+
+Browser qualification uses T3's collaborative browser, with screenshots and
+measured audio state recorded separately. This repository has no automated
+browser suite; do not report the unit/build gate as browser coverage.

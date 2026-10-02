@@ -1,6 +1,6 @@
 # Dedhed roadmap
 
-Status: private implementation under verification. Pilot qualification is in progress; public deployment remains deferred.
+Status: private implementation under verification. Pilot qualification is in progress; sound quality and browser criteria remain open. Public deployment remains deferred.
 Updated: 2026-10-02. Delivery is ordered by evidence gates; no release dates are committed.
 
 Dedhed starts with the Grateful Dead music collection at Internet Archive. V1
@@ -13,6 +13,11 @@ that listener. Tune in joins the station at its current program position.
 The [design proposal](docs/plans/0001-grateful-dead-radio.md) records source
 observations and playback assumptions. Issues below own executable scope,
 acceptance criteria, and native Gitea dependencies.
+
+The [private pilot evidence report](docs/reports/private-pilot-2026-10-02.md)
+separates local and hosted checks, source comparison, browser playback, sustained
+delivery, and recovery. [Issue #19](https://git.subcult.tv/subculture-collective/dedhed/issues/19)
+tracks the owner-reported sound-quality concern and an alternate audience source.
 
 ## Delivery milestones
 

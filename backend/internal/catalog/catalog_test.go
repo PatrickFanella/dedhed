@@ -56,6 +56,29 @@ func TestImportReviewAndRecoveryState(t *testing.T) {
 	if err = d.Media(ctx, r.ID, "media.wav", music.Digest([]byte("audio")), nil); err != nil {
 		t.Fatal(err)
 	}
+
+	wrong := r
+	wrong.ID = "other"
+	if err = d.Media(ctx, r.ID, "wrong.wav", music.Digest([]byte("wrong")), &wrong); err == nil {
+		t.Fatal("attached playback metadata to another recording")
+	}
+	if err = d.Media(ctx, "missing", "media.wav", music.Digest([]byte("audio")), nil); err == nil {
+		t.Fatal("attached media to nonexistent recording")
+	}
+	measured := r
+	measured.Tracks = append([]music.Track(nil), r.Tracks...)
+	measured.Duration = 12
+	measured.Tracks[0].Duration = 12
+	if err = d.Media(ctx, r.ID, "measured.wav", music.Digest([]byte("measured")), &measured); err != nil {
+		t.Fatal(err)
+	}
+	if err = d.Media(ctx, r.ID, "media.wav", music.Digest([]byte("audio")), nil); err != nil {
+		t.Fatal(err)
+	}
+	reset, err := d.Entries(ctx)
+	if err != nil || reset[r.ID].Recording.Duration != r.Duration {
+		t.Fatal("replacing media retained unrelated measured timing", reset, err)
+	}
 	review := music.Review{Kind: "audience", Published: true, Playback: true, PrivateOnly: true, Title: "Editorial title", Sets: []music.Set{{Title: "Set I", First: 0, Last: 0, Reviewed: true}}}
 	if err = d.Review(ctx, r.ID, review); err != nil {
 		t.Fatal(err)

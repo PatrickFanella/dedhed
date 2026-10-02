@@ -23,3 +23,6 @@ product decisions. Private operations are in the
 Track current work in [Gitea issues](https://git.subcult.tv/subculture-collective/dedhed/issues)
 and [milestones](https://git.subcult.tv/subculture-collective/dedhed/milestones).
 Source code is GPL-3.0-only; this license does not apply to acquired audio.
+
+Current verification and open listening criteria are recorded in the
+[private pilot evidence report](docs/reports/private-pilot-2026-10-02.md).

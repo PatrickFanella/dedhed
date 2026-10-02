@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -50,6 +51,29 @@ func TestPublishedAudioRangeAndSourceOutage(t *testing.T) {
 	if err = fixture.Seed(ctx, db, dir); err != nil {
 		t.Fatal(err)
 	}
+	seeded, err := db.Entries(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alternate := seeded["synthetic-1977"]
+	alternate.Recording.ID = "synthetic-alternate"
+	alternate.Recording.Venue = ""
+	alternate.Recording.Sets = []music.Set{}
+	if err = db.Import(ctx, alternate.Recording, []byte(`{"alternate":true}`)); err != nil {
+		t.Fatal(err)
+	}
+	if err = db.Media(ctx, alternate.Recording.ID, alternate.Media, alternate.SHA256, nil); err != nil {
+		t.Fatal(err)
+	}
+	alternate.Review.Sets = nil
+	if err = db.Review(ctx, alternate.Recording.ID, alternate.Review); err != nil {
+		t.Fatal(err)
+	}
+	hidden := alternate.Recording
+	hidden.ID = "unpublished"
+	if err = db.Import(ctx, hidden, []byte(`{"hidden":true}`)); err != nil {
+		t.Fatal(err)
+	}
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -58,10 +82,28 @@ func TestPublishedAudioRangeAndSourceOutage(t *testing.T) {
 	s := &Server{DB: db, Root: root}
 	server := httptest.NewServer(s.Handler())
 	defer server.Close()
+	for _, query := range []struct {
+		path  string
+		total int
+	}{{"/api/recordings", 3}, {"/api/recordings?q=absent", 0}} {
+		response, err := http.Get(server.URL + query.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var result struct {
+			Items []music.Entry `json:"items"`
+			Total int           `json:"total"`
+		}
+		err = json.NewDecoder(response.Body).Decode(&result)
+		response.Body.Close()
+		if err != nil || result.Total != query.total || len(result.Items) != query.total {
+			t.Fatal("publication filter or empty result", result, err)
+		}
+	}
 	for _, tc := range []struct {
 		path   string
 		status int
-	}{{"/api/ready", 200}, {"/api/recordings", 200}, {"/api/recordings?q=absent", 200}, {"/api/recordings/missing", 404}, {"/api/audio/missing", 404}, {"/api/station", 200}} {
+	}{{"/api/ready", 200}, {"/api/recordings", 200}, {"/api/recordings?q=absent", 200}, {"/api/recordings/missing", 404}, {"/api/recordings/unpublished", 404}, {"/api/audio/unpublished", 404}, {"/api/audio/missing", 404}, {"/api/station", 200}} {
 		resp, err := http.Get(server.URL + tc.path)
 		if err != nil {
 			t.Fatal(err)
@@ -87,7 +129,10 @@ func TestPublishedAudioRangeAndSourceOutage(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, e := range entries {
-		if err = root.Remove(e.Media); err != nil {
+		if e.Media == "" {
+			continue
+		}
+		if err = root.Remove(e.Media); err != nil && !os.IsNotExist(err) {
 			t.Fatal(err)
 		}
 	}
