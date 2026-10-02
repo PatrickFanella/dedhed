@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"git.subcult.tv/subculture-collective/dedhed/internal/music"
@@ -141,11 +142,17 @@ func (d *DB) Entries(ctx context.Context) (map[string]music.Entry, error) {
 		if e.Review.Title != "" {
 			e.Recording.Title = e.Review.Title
 		}
+		if e.Review.ConcertID != "" {
+			e.Recording.ConcertID = e.Review.ConcertID
+		}
 		out[e.Recording.ID] = e
 	}
 	return out, rows.Err()
 }
 func (d *DB) Review(ctx context.Context, id string, review music.Review) error {
+	if review.ConcertID != "" && !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`).MatchString(review.ConcertID) {
+		return fmt.Errorf("invalid reviewed concert identity")
+	}
 	entries, err := d.Entries(ctx)
 	if err != nil {
 		return err

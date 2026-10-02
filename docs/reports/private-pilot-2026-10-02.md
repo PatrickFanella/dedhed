@@ -13,6 +13,10 @@ browser mode-switching walkthrough have not been verified.
 - Runtime backend revision: `935504d864f354e2ea42ed28e6dfc3aa19a4876b`.
   Binary SHA-256: `0623cff1cd82792821ee9bde56e94f2314acccd99067dabacf33f5e721248a12`.
   Later verification and catalog guard commits are not claimed as running code.
+- Web revision: `434a49c9a7c47aa895b1adc93e0901c2b3ffb314`; served asset
+  `/assets/index-75atJPYu.js` has SHA-256
+  `9d10d86281d1fa947f0b8ac647dab94d0cf0388f41ffa3452b26cc69cf192fe0`.
+  The served bytes matched the locally built file.
 - Primary storage: `~/.local/share/dedhed/pilot`, outside Git. PostgreSQL 17 uses
   the owned `dedhed-private-pilot-db` container/volume on an internal Docker
   network. Effective addresses and nonsecret configuration are in `runtime.json`.
@@ -60,7 +64,10 @@ file. Source cuts are retained, and the preparation adds no fades.
 
 The native T3 browser rendered the synthetic catalog at desktop width. Set II
 started at approximately 30.017 seconds and stopped at 60 seconds in a 60-second
-fixture. Radio joined the same fixture using server time.
+fixture. Radio joined the same fixture using server time. A later fixture improvement gives
+its four tracks distinguishable pitches. A complete real-time HTTP decode produced
+exactly 960,000 mono samples at 16 kHz, with the expected 220/275/330/385 Hz order
+and no added duration. That decoder check is separate from rendered browser proof.
 
 The real Fillmore file started in the native T3 browser with a measured duration
 of 3,418.3025 seconds. An attached observer captured approximately 100 seconds of
@@ -109,11 +116,20 @@ recordings, ten snapshots, editorial/media state, and all 12 schedule programs.
 The restored API at `127.0.0.1:18580` returned readiness, station state, and the
 same 1,024-byte audio Range response with HTTP 206. A seek into the final song also decoded 15 seconds successfully from the restored
 API, without decoder diagnostics. This is not a restored browser audition. A newer 90-file comparison backup includes both recordings and the
-eleventh metadata snapshot; all 90 files passed their hash audit on NUC.
+eleventh metadata snapshot; all 90 files passed their hash audit on NUC. That snapshot was fetched back from
+NUC and restored to `~/.local/share/dedhed/restore-comparison-20261002` and a new
+`dedhed-restore-comparison-20261002` database. All eleven records/snapshots, both
+publication decisions, editorial/media state, and the complete schedule matched
+the primary. The separate restored API at `127.0.0.1:18581` used backend revision
+`434a49c`; both recordings passed Range requests and 15-second seek/decode checks
+without diagnostics.
 
 Recovery does not replace active listeners. Use the [private runbook](../runbooks/private-pilot.md)
 for backup, integrity audit, fresh restore, observation, and rollback. Stop only
 owned API/frontend processes; retain primary media, databases, and backups.
+
+Foundations milestone M1 is complete. Issues #2–#5, #7 and #10 are closed with
+acceptance evidence; #6 retains a reviewed-grouping correction until it merges, and browser/listening and dependent recovery gates remain open.
 
 ## Verification and open criteria
 
@@ -132,8 +148,9 @@ owned API/frontend processes; retain primary media, databases, and backups.
 - The T3 launcher passed 11 local regression checks. Its [PR #5](https://git.subcult.tv/PatrickFanella/t3-dev-environments/pulls/5)
   merged. The application implementation [PR #17](https://git.subcult.tv/subculture-collective/dedhed/pulls/17)
   merged; [PR #18](https://git.subcult.tv/subculture-collective/dedhed/pulls/18)
-  holds the CI fix, and [PR #20](https://git.subcult.tv/subculture-collective/dedhed/pulls/20)
-  holds catalog guards and the sustained observer.
+  merged the CI fix, and [PR #20](https://git.subcult.tv/subculture-collective/dedhed/pulls/20)
+  merged catalog guards and the sustained observer. Hosted [run 11996](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/11996) passed
+  for exact code revision `434a49c`.
 
 Issues [#8](https://git.subcult.tv/subculture-collective/dedhed/issues/8),
 [#9](https://git.subcult.tv/subculture-collective/dedhed/issues/9),

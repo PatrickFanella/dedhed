@@ -58,6 +58,7 @@ type Review struct {
 	Notes       string `json:"notes"`
 	Sets        []Set  `json:"sets,omitempty"`
 	Title       string `json:"title,omitempty"`
+	ConcertID   string `json:"concert_id,omitempty"`
 }
 type Entry struct {
 	Recording  Recording `json:"recording"`

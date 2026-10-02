@@ -79,16 +79,20 @@ func TestImportReviewAndRecoveryState(t *testing.T) {
 	if err != nil || reset[r.ID].Recording.Duration != r.Duration {
 		t.Fatal("replacing media retained unrelated measured timing", reset, err)
 	}
-	review := music.Review{Kind: "audience", Published: true, Playback: true, PrivateOnly: true, Title: "Editorial title", Sets: []music.Set{{Title: "Set I", First: 0, Last: 0, Reviewed: true}}}
+	if err = d.Review(ctx, r.ID, music.Review{ConcertID: "invalid group"}); err == nil {
+		t.Fatal("accepted invalid reviewed concert identity")
+	}
+	review := music.Review{Kind: "audience", Published: true, Playback: true, PrivateOnly: true, Title: "Editorial title", ConcertID: "reviewed-show", Sets: []music.Set{{Title: "Set I", First: 0, Last: 0, Reviewed: true}}}
 	if err = d.Review(ctx, r.ID, review); err != nil {
 		t.Fatal(err)
 	}
 	r.Title = "New source title"
+	r.ConcertID = "changed-source-group"
 	if err = d.Import(ctx, r, []byte(`{"raw":2}`)); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := d.Entries(ctx)
-	if err != nil || len(entries) != 1 || entries[r.ID].Recording.Title != review.Title {
+	if err != nil || len(entries) != 1 || entries[r.ID].Recording.Title != review.Title || entries[r.ID].Recording.ConcertID != review.ConcertID {
 		t.Fatalf("refresh lost editorial state: %v %v", entries, err)
 	}
 	s := music.Schedule{Revision: "persistent", Programs: []music.Program{{RecordingID: r.ID, Start: time.Now().UTC(), Duration: 10}}}
