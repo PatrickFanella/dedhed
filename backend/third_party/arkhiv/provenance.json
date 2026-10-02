@@ -1,0 +1,15 @@
+{
+  "repository": "https://git.subcult.tv/subculture-collective/arkhiv.git",
+  "revision": "2c37f49807beda90c9d9a5aeae796cd291b8695a",
+  "license": "GPL-3.0-only",
+  "files": {
+    "client.go": {
+      "source_path": "backend/internal/source/internetarchive/client.go",
+      "sha256": "57c5fd310f818f444d5bc45f83fc7d8cb4817df02e7871ad6b984f8afefd8b43"
+    },
+    "client_test.go": {
+      "source_path": "backend/internal/source/internetarchive/client_test.go",
+      "sha256": "6e3e85f6d4c56d931f0f8bc6f90c73d1fcaf7e072cd50f903442f42418e4283f"
+    }
+  }
+}
