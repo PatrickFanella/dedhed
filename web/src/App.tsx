@@ -42,7 +42,7 @@ export default function App() {
   }
   async function playSet(entry: Entry, set?: SetList, trackStart?: number) {
     operation.current++; const [start, end] = setBounds(entry.recording, set);
-    await load({ entry, mode: 'on-demand', start, end, label: set?.title ?? 'Complete show' }, trackStart ?? start);
+    await load({ entry, mode: 'on-demand', start, end, label: set?.title ?? 'Full recording' }, trackStart ?? start);
   }
   async function tune() {
     const op = ++operation.current; setPlayerError(''); setPending(true);
@@ -99,7 +99,7 @@ export default function App() {
         </div>
         <article className="detail" aria-label="Recording details">{r && selected ? <>
           <p className="eyebrow">{r.synthetic ? 'SYNTHETIC DEVELOPMENT RECORDING' : `${r.kind.toUpperCase()} RECORDING`}</p><h2>{r.venue || r.title}</h2><p className="show-date">{r.date} <span> / </span> {r.location}</p>
-          <button className="outline" onClick={() => { void playSet(selected); }}>Play complete show <span>{clock(r.duration)}</span></button>
+          <button className="outline" onClick={() => { void playSet(selected); }}>Play full recording <span>{clock(r.duration)}</span></button>
           {(r.sets.length ? r.sets : [{ title: 'Complete recording · set boundaries unreviewed', first: 0, last: r.tracks.length - 1, reviewed: false }]).map((set, i) => <section className="set" key={i}><div className="set-head"><h3>{set.title}</h3>{set.reviewed && <button onClick={() => { void playSet(selected, set); }}>Play set <span aria-hidden="true">▶</span></button>}</div><ol start={set.first + 1}>{r.tracks.slice(set.first, set.last + 1).map(t => <li key={t.position}><button onClick={() => { void playSet(selected, set.reviewed ? set : undefined, t.start); }}><span>{t.title}</span><small>{clock(t.duration)}</small></button></li>)}</ol></section>)}
           <details className="credits"><summary>Recording credits & source</summary><dl><dt>Taped by</dt><dd>{r.taper || 'Not recorded'}</dd><dt>Transferred by</dt><dd>{r.transferer || 'Not recorded'}</dd><dt>Source lineage</dt><dd>{r.source}</dd></dl>{!r.synthetic && <a href={`https://archive.org/details/${encodeURIComponent(r.id)}`} target="_blank" rel="noreferrer">Original recording at Internet Archive ↗</a>}<p>{selected.review.notes}</p>{r.warnings.map(w => <p key={w}>{w}</p>)}</details>
         </> : <p className="empty">Choose a concert from the shelf to explore its sets and recordings.</p>}</article></div>

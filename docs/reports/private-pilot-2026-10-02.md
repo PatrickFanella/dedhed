@@ -19,7 +19,7 @@ browser mode-switching walkthrough have not been verified.
 - Arkhiv reuse: the metadata client and its tests, pinned byte-for-byte to
   `2c37f49807beda90c9d9a5aeae796cd291b8695a`. No Arkhiv audio implementation or
   document application was copied. See the [architecture decision](../adr/0001-archive-reuse-and-audio.md).
-- Source inventory: 11 recordings across 10 concert identities, with 254 tracks,
+- Source inventory: 11 recordings across 10 concert identities, with 254 tracks, 642 normalized audio-file variants and 1,443 total metadata-listed files,
   alternate-source metadata, and explicit uncertainties. Metadata discovery is
   separate from the two reviewed private playback selections below.
 
@@ -123,7 +123,8 @@ owned API/frontend processes; retain primary media, databases, and backups.
   from the pilot. Source sync and cleanup were verified for the synthetic preview.
 - Hosted [run 11984](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/11984)
   passed for CI correction `21f0ffe`; [run 11988](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/11988)
-  passed for guard/observer revision `3f0fa4a`. Hosted results are distinct from
+  passed for guard/observer revision `3f0fa4a`. [Run 11991](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/11991)
+  passed for report/API regression revision `2cf27e1`. Hosted results are distinct from
   local checks and runtime identity.
 - The original CI job could not reach PostgreSQL via job localhost. Its runner
   also lacked service-name DNS on Docker bridge. The fix resolves exactly the
