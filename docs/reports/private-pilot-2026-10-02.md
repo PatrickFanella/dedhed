@@ -3,16 +3,20 @@
 The concert library, on-demand player, and shared schedule are implemented and
 available in a loopback-only private pilot. Full listening qualification remains
 open. The owner confirmed normal playback but reported poor sound quality for
-the initial tape. Mobile controls, two simultaneous listeners, and the complete
+the initial tape, later described as muffled or distant. Mobile controls, two simultaneous listeners, and the complete
 browser mode-switching walkthrough have not been verified.
 
 ## Runtime and source identity
 
 - Host: Kvant. Checkout: `/home/onnwee/Work/Subcult/dedhed`.
 - Private web: `http://127.0.0.1:18577`; API: `127.0.0.1:18578`.
-- Runtime backend revision: `935504d864f354e2ea42ed28e6dfc3aa19a4876b`.
-  Binary SHA-256: `0623cff1cd82792821ee9bde56e94f2314acccd99067dabacf33f5e721248a12`.
-  Later verification and catalog guard commits are not claimed as running code.
+- Current backend revision: `e7ecd7972c56db12435aba4a618309fff97adf33`.
+  Binary SHA-256: `6bae6b98ff88e4da3466f2f63465976aba56344b5475bf855162cc8b2b124235`.
+  The full-file delivery trial ran revision `935504d864f354e2ea42ed28e6dfc3aa19a4876b`
+  (binary `0623cff1cd82792821ee9bde56e94f2314acccd99067dabacf33f5e721248a12`).
+  After that run, the merged backend was promoted with a verified rollback copy.
+  Readiness, both recordings' Range bytes, and the advancing station timeline passed.
+  This restart check does not claim a second full-file soak on the newer binary.
 - Web revision: `434a49c9a7c47aa895b1adc93e0901c2b3ffb314`; served asset
   `/assets/index-75atJPYu.js` has SHA-256
   `9d10d86281d1fa947f0b8ac647dab94d0cf0388f41ffa3452b26cc69cf192fe0`.
@@ -75,7 +79,9 @@ advancing playback without observed waiting, stalled, error, or ended events.
 A separate radio join measured approximately -0.274 seconds relative to the
 station offset. That single-client measurement does not establish two-listener
 synchronization. The owner reported that playback was working but did not sound
-good; the owner later closed the Browser panel.
+good, later specifying muffled or distant sound. That symptom is consistent with
+the audience tape and its copy lineage, without establishing a definitive cause.
+The owner later closed the Browser panel.
 
 A 30–60 second source/derivative comparison measured RMS levels of 0.095139 and
 0.094872, with peaks below full scale and signal-to-error ratio of 35.13 dB. Each
@@ -86,9 +92,15 @@ checks found no added sample count or silent join interval; they do not replace
 human audition or establish subjective fidelity. [Issue #19](https://git.subcult.tv/subculture-collective/dedhed/issues/19)
 tracks the listening concern.
 
-A real-time full-file HTTP decode and station/readiness observation is running.
-Its final receipt must be checked before claiming sustained completion. This is
-decoder/server evidence, separate from browser playback and speaker output.
+The real-time full-file HTTP decode completed successfully: exactly 3,418.3025
+seconds, decoder exit 0, no decoder diagnostics, and zero API failures across 211
+station/readiness observations. API observation covered approximately 52.5 minutes
+of the 57-minute delivery run. Sampled peak RSS was 55.8 MiB for the decoder and
+19.4 MiB for the API; sampled average CPU use was approximately
+0.58% and 0.01%, respectively. These are small-pilot observations, not
+capacity benchmarks. This is decoder/server evidence, separate from browser
+playback and speaker output. The known source cuts remain; the result covers the
+complete retained recording, not an uncut concert.
 
 The T3 automation client changed during verification. Reopening and creating a
 new tab still returned a Chrome error document; environment-port navigation and
@@ -98,6 +110,10 @@ simulation is unavailable on this Linux host, and the Android SDK is absent.
 No substitute browser result is claimed.
 
 ## Schedule and recovery
+
+The station observer also captured the natural program boundary at
+`2026-10-02T22:08:24.72034Z` without API errors while the independent file decode
+continued. That checks server timeline behavior, not browser retuning.
 
 The persisted schedule revision is `private-pilot-20261002`, beginning at
 `2026-10-02T21:11:26.41784Z`. It contains 12 explicit repetitions of the initial
@@ -122,14 +138,22 @@ NUC and restored to `~/.local/share/dedhed/restore-comparison-20261002` and a ne
 publication decisions, editorial/media state, and the complete schedule matched
 the primary. The separate restored API at `127.0.0.1:18581` used backend revision
 `434a49c`; both recordings passed Range requests and 15-second seek/decode checks
-without diagnostics.
+without diagnostics. Both restore APIs and containers were stopped after proof;
+their storage and volumes are retained.
+
+A final 101-file backup includes the completed decoder/observer results, resource
+measurements, runtime promotion and rollback receipts, both recordings, and the
+database dump. It is retained locally and at
+`nuc:/home/onnwee/backups/dedhed/private-pilot-20261002-final/`; all 101 SHA-256
+hashes passed a fresh audit on NUC. The earlier 90-file backup was the one fetched
+back and restored. The final backup adds receipts and is not a second restore trial.
 
 Recovery does not replace active listeners. Use the [private runbook](../runbooks/private-pilot.md)
 for backup, integrity audit, fresh restore, observation, and rollback. Stop only
 owned API/frontend processes; retain primary media, databases, and backups.
 
-Foundations milestone M1 is complete. Issues #2–#5, #7 and #10 are closed with
-acceptance evidence; #6 retains a reviewed-grouping correction until it merges, and browser/listening and dependent recovery gates remain open.
+Foundations milestone M1 is complete. Issues #2–#7 and #10 are closed with
+acceptance evidence; browser/listening and dependent recovery gates remain open.
 
 ## Verification and open criteria
 
@@ -150,7 +174,10 @@ acceptance evidence; #6 retains a reviewed-grouping correction until it merges, 
   merged; [PR #18](https://git.subcult.tv/subculture-collective/dedhed/pulls/18)
   merged the CI fix, and [PR #20](https://git.subcult.tv/subculture-collective/dedhed/pulls/20)
   merged catalog guards and the sustained observer. Hosted [run 11996](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/11996) passed
-  for exact code revision `434a49c`.
+  for exact code revision `434a49c`. [PR #21](https://git.subcult.tv/subculture-collective/dedhed/pulls/21)
+  merged the audible-fixture and reviewed-grouping corrections. Hosted
+  [run 12010](https://git.subcult.tv/subculture-collective/dedhed/actions/runs/12010)
+  passed for the exact current runtime revision `e7ecd797`.
 
 Issues [#8](https://git.subcult.tv/subculture-collective/dedhed/issues/8),
 [#9](https://git.subcult.tv/subculture-collective/dedhed/issues/9),
@@ -159,7 +186,8 @@ Issues [#8](https://git.subcult.tv/subculture-collective/dedhed/issues/8),
 [#14](https://git.subcult.tv/subculture-collective/dedhed/issues/14) retain unmet
 browser/listening criteria. Those include mobile/keyboard controls, independent
 simultaneous set/radio listeners, reconnect and failure UI, auditioned segues,
-and a complete sustained browser run. Public release remains
+and a complete sustained browser run. The successful full-file decoder run does
+not close those listening criteria. Public release remains
 [#15](https://git.subcult.tv/subculture-collective/dedhed/issues/15).
 
 Raw metadata, acquisition and comparison receipts, observer reports, media,
