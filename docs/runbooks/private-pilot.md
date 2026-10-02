@@ -16,6 +16,12 @@ are provisional until decoding. Search results are not an acquisition manifest.
 Review the individual item, source lineage, credits, track order, missing content,
 and policy. Save a review JSON with `kind`, `acquisition`, `playback`, `relay`,
 `private_only`, `published`, `notes`, and optional reviewed `sets`.
+An optional `concert_id` retains a reviewed concert grouping across metadata
+refreshes. Reuse an existing concert ID only after confirming the recordings are
+the same performance; matching dates alone are insufficient. Group IDs accept
+1–128 letters, digits, periods, underscores, or hyphens and start with a letter
+or digit. Source grouping and raw metadata remain preserved separately.
+
 Set ranges use zero-based inclusive track indices. Keep `published` false until
 media is verified. Unknown, matrix, and soundboard sources cannot be acquired
 under the pilot policy. Relay is disabled. The audience policy supports source

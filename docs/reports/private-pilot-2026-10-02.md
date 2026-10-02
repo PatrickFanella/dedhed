@@ -128,8 +128,8 @@ Recovery does not replace active listeners. Use the [private runbook](../runbook
 for backup, integrity audit, fresh restore, observation, and rollback. Stop only
 owned API/frontend processes; retain primary media, databases, and backups.
 
-Foundations milestone M1 is complete. Issues #2–#7 and #10 are closed with
-acceptance evidence; browser/listening and dependent recovery gates remain open.
+Foundations milestone M1 is complete. Issues #2–#5, #7 and #10 are closed with
+acceptance evidence; #6 retains a reviewed-grouping correction until it merges, and browser/listening and dependent recovery gates remain open.
 
 ## Verification and open criteria
 
