@@ -17,6 +17,7 @@ import (
 	"git.subcult.tv/subculture-collective/dedhed/internal/app"
 	"git.subcult.tv/subculture-collective/dedhed/internal/catalog"
 	"git.subcult.tv/subculture-collective/dedhed/internal/fixture"
+	"git.subcult.tv/subculture-collective/dedhed/internal/inventory"
 	"git.subcult.tv/subculture-collective/dedhed/internal/music"
 	"git.subcult.tv/subculture-collective/dedhed/internal/source"
 )
@@ -29,7 +30,7 @@ func env(key, def string) string {
 }
 func run() error {
 	if len(os.Args) < 2 {
-		return fmt.Errorf("usage: dedhed migrate|seed|discover|import|review|media|schedule|report|serve")
+		return fmt.Errorf("usage: dedhed migrate|seed|discover|inventory-scrape|inventory-fetch|inventory-import|import|review|media|schedule|report|serve")
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -41,6 +42,11 @@ func run() error {
 	out := f.String("out", "", "snapshot output directory")
 	media := f.String("media", "", "managed media basename")
 	sha := f.String("sha256", "", "verified media SHA-256")
+	dir := f.String("dir", "", "inventory directory")
+	query := f.String("query", "collection:GratefulDead", "source collection query")
+	limit := f.Int("limit", 0, "maximum items to fetch this run (0 = all)")
+	concurrency := f.Int("concurrency", 2, "parallel metadata requests (1-4)")
+	delay := f.Duration("delay", 250*time.Millisecond, "pause after each metadata request")
 	if err := f.Parse(os.Args[2:]); err != nil {
 		return err
 	}
@@ -70,6 +76,52 @@ func run() error {
 		}
 		return json.NewEncoder(os.Stdout).Encode(report)
 	}
+	if cmd == "inventory-scrape" || cmd == "inventory-fetch" {
+		if *dir == "" {
+			return fmt.Errorf("%s requires -dir", cmd)
+		}
+		if err := os.MkdirAll(*dir, 0700); err != nil {
+			return err
+		}
+		adapter := source.New()
+		if cmd == "inventory-scrape" {
+			tmp := filepath.Join(*dir, "collection.jsonl.part")
+			out, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+			if err != nil {
+				return err
+			}
+			written, total, err := inventory.Scrape(ctx, adapter.Client, *query, out)
+			out.Close()
+			if err != nil {
+				return err
+			}
+			if err = os.Rename(tmp, filepath.Join(*dir, "collection.jsonl")); err != nil {
+				return err
+			}
+			return json.NewEncoder(os.Stdout).Encode(map[string]any{"written": written, "source_total": total, "file": filepath.Join(*dir, "collection.jsonl")})
+		}
+		summaries, err := inventory.ReadSummaries(filepath.Join(*dir, "collection.jsonl"))
+		if err != nil {
+			return err
+		}
+		ids := []string{}
+		for _, s := range summaries {
+			if _, err := os.Stat(filepath.Join(*dir, "items", s.Identifier+".json")); err != nil {
+				ids = append(ids, s.Identifier)
+			}
+		}
+		if *limit > 0 && len(ids) > *limit {
+			ids = ids[:*limit]
+		}
+		started := time.Now()
+		p, err := inventory.FetchAll(ctx, adapter, ids, *dir, *concurrency, *delay, func(p inventory.Progress) {
+			if (p.Done+p.Failed+p.Skipped)%100 == 0 {
+				log.Printf("inventory fetch %d/%d done, %d failed, %s elapsed", p.Done+p.Skipped, p.Total, p.Failed, time.Since(started).Round(time.Second))
+			}
+		})
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"pending_before": len(ids), "fetched": p.Done, "failed": p.Failed, "elapsed": time.Since(started).String()})
+		return err
+	}
 	d, err := catalog.Open(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		return fmt.Errorf("database connection: %w", err)
@@ -81,6 +133,15 @@ func run() error {
 		return d.Migrate(ctx, env("DEDHED_MIGRATIONS", "../migrations"))
 	case "seed":
 		return fixture.Seed(ctx, d, root)
+	case "inventory-import":
+		if *dir == "" {
+			return fmt.Errorf("inventory-import requires -dir")
+		}
+		total, fetched, err := inventory.Load(*dir, 200, func(batch []music.SourceItem) error { return d.UpsertItems(ctx, batch) })
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{"items": total, "with_metadata": fetched})
 	case "import":
 		b, err := os.ReadFile(*file)
 		if err != nil {

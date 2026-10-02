@@ -27,6 +27,44 @@ media is verified. Unknown, matrix, and soundboard sources cannot be acquired
 under the pilot policy. Relay is disabled. The audience policy supports source
 downloads, not an assumed public rebroadcast license.
 
+## Build the show index
+
+The show index is a metadata-only inventory of every item in the source
+collection. It feeds the calendar, date pages, On this day and collection-wide
+search. It acquires no audio and grants no playback: a date page lists every
+source recording, and only entries that are separately imported, reviewed and
+published can be played. Run it from `backend/` on a host with source access,
+never inside an isolated preview.
+
+```sh
+go run ./cmd/dedhed inventory-scrape -dir /private/inventory
+go run ./cmd/dedhed inventory-fetch -dir /private/inventory -concurrency 3 -delay 150ms
+go run ./cmd/dedhed inventory-import -dir /private/inventory
+```
+
+`inventory-scrape` pages through the collection listing (`-query`, default
+`collection:GratefulDead`) and writes `collection.jsonl`: one summary per item
+with date, venue, place, title, source, credits, size, downloads and rating.
+On 2026-10-02 that was 18,385 items in two requests.
+
+`inventory-fetch` stores each item's full metadata as `items/<id>.json`. It
+skips files that already exist, so an interrupted run resumes; `-limit` bounds a
+run. Failures go to `errors.jsonl` and do not stop the run. Concurrency is
+capped at four; at three workers the source answered about seventy items a
+minute, so the whole collection takes roughly four hours. Run it detached, for
+example with `systemd-run --user`.
+
+`inventory-import` normalizes summaries with any fetched metadata into
+`source_items`: parsed show date, classification, credits, track titles joined
+into a searchable `songs` field, durations, warnings and the snapshot hash. Raw
+metadata stays on disk; re-importing after more fetches replaces earlier rows.
+Items whose source date lacks a month or day keep their date text but stay off
+the calendar.
+
+The index directory holds source metadata only. Keep it in private storage
+outside Git. The preview launcher mounts its data directory at `/data`; copy the
+index there and import from inside the app container to fill a preview.
+
 ## Acquire and prepare audio
 
 Run `python3 scripts/acquire.py --recording NORMALIZED_JSON --review REVIEW_JSON

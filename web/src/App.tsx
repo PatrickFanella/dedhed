@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { clock, currentTrack, setBounds, type Entry, type Playback, type Recording, type SetList, type Station } from './types';
+import { CalendarView, DateView, OnThisDay, useRoute } from './shows';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 const SIDES = 'ABCDEF';
@@ -27,6 +28,7 @@ export default function App() {
   const [loading, setLoading] = useState(true), [catalogError, setCatalogError] = useState(''), [stationError, setStationError] = useState('');
   const [playback, setPlayback] = useState<Playback | null>(null), [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0), [playerError, setPlayerError] = useState(''), [volume, setVolume] = useState(0.7), [pending, setPending] = useState(false);
+  const route = useRoute(); const [opening, setOpening] = useState('');
   const audio = useRef<HTMLAudioElement>(null), pendingSeek = useRef<number | null>(null), operation = useRef(0), advancing = useRef(false);
 
   useEffect(() => {
@@ -89,6 +91,12 @@ export default function App() {
   }
   function seek(value: number) { if (audio.current && playback) { audio.current.currentTime = Math.min(playback.end, Math.max(playback.start, value)); setPosition(audio.current.currentTime); } }
 
+  async function openFromIndex(id: string) {
+    setOpening(id); setPlayerError('');
+    try { const entry = await get<Entry>(`/api/recordings/${encodeURIComponent(id)}`); setSelected(entry); await playSet(entry); }
+    catch (e) { setPlayerError(e instanceof Error ? e.message : 'Recording unavailable'); }
+    finally { setOpening(''); }
+  }
   const r = selected?.recording;
   const track = playback ? currentTrack(playback.entry.recording, position) : null;
   const onAir = station ? items.find(i => i.recording.id === station.program.recording_id)?.recording : null;
@@ -98,10 +106,13 @@ export default function App() {
   return <>
     <header className="masthead">
       <a href="/" className="wordmark" aria-label="Dedhed home"><i aria-hidden="true" />dedhed</a>
-      <span className="eyebrow">Live tapes / shared air</span>
+      <nav className="masthead-nav" aria-label="Sections"><a href="#/" aria-current={route.view === 'home' ? 'page' : undefined}>The rack</a><a href="#/calendar" aria-current={route.view !== 'home' ? 'page' : undefined}>Calendar</a></nav>
       {station ? <span className="sticker live">On air{onAir ? ` · ${onAir.date}` : ''}</span> : <span className="sticker">Off air</span>}
     </header>
     <main>
+      {route.view === 'calendar' && <CalendarView year={route.year} />}
+      {route.view === 'date' && <DateView date={route.date} onPlay={id => { void openFromIndex(id); }} busy={opening} />}
+      {route.view === 'home' && <>
       <section className="intro">
         <div>
           <p className="eyebrow">The Grateful Dead archive · private pilot</p>
@@ -117,6 +128,7 @@ export default function App() {
           {station?.next && <small>UP NEXT · {nextName ?? 'Next scheduled concert'}</small>}
         </aside>
       </section>
+      <OnThisDay />
 
       <section className="library" aria-label="Concert library">
         <div className="library-head">
@@ -180,6 +192,7 @@ export default function App() {
           </> : <p className="shelf-empty">Pull a tape from the rack to see its sets and credits.</p>}</article>
         </div>
       </section>
+      </>}
       <footer className="footer">For the nights that keep going.<span>Source credits stay with every tape.</span></footer>
     </main>
 

@@ -40,6 +40,10 @@ func (s *Server) Handler() http.Handler {
 	m.HandleFunc("GET /api/recordings/{id}", s.detail)
 	m.HandleFunc("GET /api/audio/{id}", s.audio)
 	m.HandleFunc("GET /api/station", s.station)
+	m.HandleFunc("GET /api/calendar", s.calendar)
+	m.HandleFunc("GET /api/dates/{date}", s.date)
+	m.HandleFunc("GET /api/on-this-day", s.onThisDay)
+	m.HandleFunc("GET /api/shows", s.shows)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "no-store")
