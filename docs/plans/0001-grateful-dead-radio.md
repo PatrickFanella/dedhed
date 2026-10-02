@@ -1,6 +1,6 @@
 # First milestone: Grateful Dead concert library and radio
 
-Status: proposal; no audio playback or station deployment implemented.
+Status: private implementation under verification; sustained pilot and recovery evidence in progress.
 Observation date: 2026-10-02.
 
 Delivery tracking: [roadmap](../../ROADMAP.md), with linked implementation issues

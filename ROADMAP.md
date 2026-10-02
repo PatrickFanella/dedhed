@@ -1,6 +1,6 @@
 # Dedhed roadmap
 
-Status: planned. No application, acquired audio, or station deployment exists yet.
+Status: private implementation under verification. Pilot qualification is in progress; public deployment remains deferred.
 Updated: 2026-10-02. Delivery is ordered by evidence gates; no release dates are committed.
 
 Dedhed starts with the Grateful Dead music collection at Internet Archive. V1
