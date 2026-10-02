@@ -13,5 +13,10 @@ or full show on demand, or click **Tune in** to join the shared station at its
 current position. Both show the concert date, venue, track, and recording credits.
 On-demand controls affect only that listener; the station keeps its own timeline.
 
-See [the first milestone](docs/plans/0001-grateful-dead-radio.md) for reuse
-boundaries, source evidence, playback choices, and acceptance criteria.
+See the [roadmap](ROADMAP.md) for delivery milestones, linked issues, and
+dependencies. The [design proposal](docs/plans/0001-grateful-dead-radio.md)
+records reuse boundaries, source evidence, playback choices, and acceptance
+criteria.
+
+Track current work in [Gitea issues](https://git.subcult.tv/subculture-collective/dedhed/issues)
+and [milestones](https://git.subcult.tv/subculture-collective/dedhed/milestones).
