@@ -1,10 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { clock, currentTrack, setBounds, type Entry, type Playback, type SetList, type Station } from './types';
+import { clock, currentTrack, setBounds, type Entry, type Playback, type Recording, type SetList, type Station } from './types';
+import { CalendarView, DateView, OnThisDay, useRoute } from './shows';
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+const SIDES = 'ABCDEF';
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error ?? 'Unable to load this recording'); }
   return res.json() as Promise<T>;
+}
+
+/** The brand tab at the end of a spine names the source type; synthetic tapes get the chrome tab. */
+function tabClass(r: Recording): string {
+  if (r.synthetic) return 'tab chrome';
+  return r.kind.toLowerCase() === 'sbd' ? 'tab gold' : 'tab';
+}
+function setNumerals(r: Recording): string { return r.sets.filter(s => s.reviewed).map((_, i) => ROMAN[i] ?? String(i + 1)).join(' · '); }
+function setsForDisplay(r: Recording): SetList[] {
+  return r.sets.length ? r.sets : [{ title: 'Complete recording · set boundaries unreviewed', first: 0, last: r.tracks.length - 1, reviewed: false }];
 }
 
 export default function App() {
@@ -14,6 +28,7 @@ export default function App() {
   const [loading, setLoading] = useState(true), [catalogError, setCatalogError] = useState(''), [stationError, setStationError] = useState('');
   const [playback, setPlayback] = useState<Playback | null>(null), [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0), [playerError, setPlayerError] = useState(''), [volume, setVolume] = useState(0.7), [pending, setPending] = useState(false);
+  const route = useRoute(); const [opening, setOpening] = useState('');
   const audio = useRef<HTMLAudioElement>(null), pendingSeek = useRef<number | null>(null), operation = useRef(0), advancing = useRef(false);
 
   useEffect(() => {
@@ -75,44 +90,133 @@ export default function App() {
     }
   }
   function seek(value: number) { if (audio.current && playback) { audio.current.currentTime = Math.min(playback.end, Math.max(playback.start, value)); setPosition(audio.current.currentTime); } }
+
+  async function openFromIndex(id: string) {
+    setOpening(id); setPlayerError('');
+    try { const entry = await get<Entry>(`/api/recordings/${encodeURIComponent(id)}`); setSelected(entry); await playSet(entry); }
+    catch (e) { setPlayerError(e instanceof Error ? e.message : 'Recording unavailable'); }
+    finally { setOpening(''); }
+  }
   const r = selected?.recording;
   const track = playback ? currentTrack(playback.entry.recording, position) : null;
+  const onAir = station ? items.find(i => i.recording.id === station.program.recording_id)?.recording : null;
   const nextName = station?.next ? items.find(i => i.recording.id === station.next?.recording_id)?.recording.venue : null;
+  const playingHere = playback && r && playback.entry.recording.id === r.id;
 
   return <>
-    <header className="masthead"><a href="/" className="wordmark" aria-label="Dedhed home">dedhed<span>●</span></a><p>LIVE TAPES / SHARED AIR</p><span className="edition">PRIVATE PILOT · VOL. 01</span></header>
+    <header className="masthead">
+      <a href="/" className="wordmark" aria-label="Dedhed home"><i aria-hidden="true" />dedhed</a>
+      <nav className="masthead-nav" aria-label="Sections"><a href="#/" aria-current={route.view === 'home' ? 'page' : undefined}>The rack</a><a href="#/calendar" aria-current={route.view !== 'home' ? 'page' : undefined}>Calendar</a></nav>
+      {station ? <span className="sticker live">On air{onAir ? ` · ${onAir.date}` : ''}</span> : <span className="sticker">Off air</span>}
+    </header>
     <main>
-      <section className="intro"><div><p className="eyebrow">THE GRATEFUL DEAD ARCHIVE</p><h1>Find your way<br />into a show.</h1><p className="lede">Choose a night. Play a set. Or tune in and see where the music takes us.</p></div>
-        <aside className="station"><p className="eyebrow"><span className="live-dot" /> SHARED RADIO</p><h2>One station.<br />The same moment.</h2><p>{station ? 'Join the concert already in progress.' : stationError || 'Checking the station…'}</p><button className="primary" onClick={() => { void tune(); }} disabled={!station}>Tune in <span aria-hidden="true">↗</span></button>{station?.next && <small>UP NEXT · {nextName ?? 'Next scheduled concert'}</small>}</aside>
+      {route.view === 'calendar' && <CalendarView year={route.year} />}
+      {route.view === 'date' && <DateView date={route.date} onPlay={id => { void openFromIndex(id); }} busy={opening} />}
+      {route.view === 'home' && <>
+      <section className="intro">
+        <div>
+          <p className="eyebrow">The Grateful Dead archive · private pilot</p>
+          <h1>Find your way<br />into a show.</h1>
+          <p className="lede">Choose a night. Play a set or the whole tape. Or tune in and hear what everyone else is hearing, at the same moment.</p>
+        </div>
+        <aside className={`station ${playback?.mode === 'radio' && playing ? 'is-playing' : ''}`} aria-label="Shared radio">
+          <div className="head"><span className="sticker live">On air</span><span className="reel" aria-hidden="true" style={{ width: 28, height: 28, borderWidth: 2 }} /></div>
+          <p className="eyebrow">Shared radio</p>
+          <h2>One station.<br />The same moment.</h2>
+          <p>{station ? (onAir ? `${onAir.venue || onAir.title} · ${onAir.date}` : 'Join the concert already in progress.') : stationError || 'Checking the station…'}</p>
+          <button className="key primary" onClick={() => { void tune(); }} disabled={!station}>Tune in ↗</button>
+          {station?.next && <small>UP NEXT · {nextName ?? 'Next scheduled concert'}</small>}
+        </aside>
       </section>
+      <OnThisDay />
 
       <section className="library" aria-label="Concert library">
-        <div className="library-head"><h2>The tape shelf <span>{total.toString().padStart(2, '0')}</span></h2><p>CONCERTS, SETS & SOURCE NOTES</p></div>
-        <div className="columns"><div className="shelf">
-          <div className="filters"><label>Find a show<input type="search" placeholder="Date, venue, city…" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} /></label><label>Year<input inputMode="numeric" placeholder="All years" maxLength={4} value={year} onChange={e => { setYear(e.target.value); setPage(1); }} /></label></div>
-          {catalogError && <p role="alert">{catalogError}</p>}{loading && <p role="status">Loading the tape shelf…</p>}
-          {!loading && !catalogError && items.length === 0 && <p className="empty">No shows match this search. Try another date or venue.</p>}
-          <div className="recordings">{items.map((entry, i) => <button key={entry.recording.id} className={`tape ${selected?.recording.id === entry.recording.id ? 'selected' : ''}`} onClick={() => setSelected(entry)} aria-pressed={selected?.recording.id === entry.recording.id}>
-            <span className="tape-number">{String((page - 1) * 20 + i + 1).padStart(2, '0')}</span><span className="tape-title"><strong>{entry.recording.date}</strong><span>{entry.recording.venue || 'Venue unrecorded'}</span><small>{entry.recording.location || 'Location unrecorded'}</small>{entry.recording.synthetic && <em>TEST TONES · SYNTHETIC</em>}</span><span className="tape-length">{clock(entry.recording.duration)}<span aria-hidden="true">↗</span></span>
-          </button>)}</div>
-          {total > 20 && <nav aria-label="Catalog pages"><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page}</span><button disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>Next</button></nav>}
+        <div className="library-head">
+          <h2>The rack <small>{total.toString().padStart(2, '0')} tapes</small></h2>
+          <div className="filters">
+            <label className="field"><span>Find a show</span><input type="search" placeholder="Date, venue, city…" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} /></label>
+            <label className="field"><span>Year</span><input inputMode="numeric" placeholder="All" maxLength={4} value={year} onChange={e => { setYear(e.target.value); setPage(1); }} /></label>
+          </div>
         </div>
-        <article className="detail" aria-label="Recording details">{r && selected ? <>
-          <p className="eyebrow">{r.synthetic ? 'SYNTHETIC DEVELOPMENT RECORDING' : `${r.kind.toUpperCase()} RECORDING`}</p><h2>{r.venue || r.title}</h2><p className="show-date">{r.date} <span> / </span> {r.location}</p>
-          <button className="outline" onClick={() => { void playSet(selected); }}>Play full recording <span>{clock(r.duration)}</span></button>
-          {(r.sets.length ? r.sets : [{ title: 'Complete recording · set boundaries unreviewed', first: 0, last: r.tracks.length - 1, reviewed: false }]).map((set, i) => <section className="set" key={i}><div className="set-head"><h3>{set.title}</h3>{set.reviewed && <button onClick={() => { void playSet(selected, set); }}>Play set <span aria-hidden="true">▶</span></button>}</div><ol start={set.first + 1}>{r.tracks.slice(set.first, set.last + 1).map(t => <li key={t.position}><button onClick={() => { void playSet(selected, set.reviewed ? set : undefined, t.start); }}><span>{t.title}</span><small>{clock(t.duration)}</small></button></li>)}</ol></section>)}
-          <details className="credits"><summary>Recording credits & source</summary><dl><dt>Taped by</dt><dd>{r.taper || 'Not recorded'}</dd><dt>Transferred by</dt><dd>{r.transferer || 'Not recorded'}</dd><dt>Source lineage</dt><dd>{r.source}</dd></dl>{!r.synthetic && <a href={`https://archive.org/details/${encodeURIComponent(r.id)}`} target="_blank" rel="noreferrer">Original recording at Internet Archive ↗</a>}<p>{selected.review.notes}</p>{r.warnings.map(w => <p key={w}>{w}</p>)}</details>
-        </> : <p className="empty">Choose a concert from the shelf to explore its sets and recordings.</p>}</article></div>
+        <div className="columns">
+          <div>
+            {catalogError && <p className="status" role="alert">{catalogError}</p>}
+            {loading && <p className="status" role="status">Pulling the tape shelf…</p>}
+            {!loading && !catalogError && items.length === 0 && <p className="shelf-empty">No shows match this search. Try another date or venue.</p>}
+            {items.length > 0 && <div className="rack" role="list">
+              {items.map(entry => { const rec = entry.recording; const isSel = selected?.recording.id === rec.id; const unreviewed = !rec.sets.some(s => s.reviewed); return <div className="slot" role="listitem" key={rec.id}>
+                <button className="spine" onClick={() => setSelected(entry)} aria-pressed={isSel}>
+                  <span className={tabClass(rec)}>{rec.synthetic ? 'TEST' : rec.kind.toUpperCase()}</span>
+                  <span className={`label ${rec.synthetic ? 'stock-grey' : unreviewed ? 'stock-aged' : ''}`}>
+                    <span className="band">{rec.date}</span>
+                    {setNumerals(rec) && <span className="set">{setNumerals(rec)}</span>}
+                    <span className="venue">{rec.venue || 'Venue unrecorded'}{rec.location ? `, ${rec.location}` : ''}</span>
+                    {rec.synthetic ? <span className="sticker red">Synthetic</span> : unreviewed ? <span className="sticker warn">Sets unreviewed</span> : null}
+                  </span>
+                  <span className="end">{clock(rec.duration)}</span>
+                </button>
+              </div>; })}
+              {items.length < 6 && Array.from({ length: 6 - items.length }, (_, i) => <div className="slot empty" aria-hidden="true" key={`empty-${i}`} />)}
+            </div>}
+            {total > 20 && <nav className="pager" aria-label="Catalog pages"><button className="key ghost" disabled={page === 1} onClick={() => setPage(page - 1)}>← Previous</button><span>Shelf {page} of {Math.ceil(total / 20)}</span><button className="key ghost" disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>Next →</button></nav>}
+          </div>
+
+          <article className="detail" aria-label="Recording details">{r && selected ? <>
+            <div className={`cassette ${playingHere && playing ? 'is-playing' : ''}`}>
+              <div className="face">
+                <p className="eyebrow">{r.synthetic ? 'Synthetic development recording' : `${r.kind} recording`}</p>
+                <span className="side">A</span>
+                <h2>{r.venue || r.title}</h2>
+                <div className="stamp">{r.date}<b>{clock(r.duration)}</b></div>
+                <div className="window" aria-hidden="true"><span className="reel" /><span className="tape" /><span className="reel" /></div>
+                <p className="line">{r.location || 'Location unrecorded'} · <b>Taped by</b> {r.taper || 'not recorded'} · <b>Transferred by</b> {r.transferer || 'not recorded'} · {r.sets.some(s => s.reviewed) ? 'Set boundaries reviewed' : 'Set boundaries unreviewed'}</p>
+              </div>
+              <div className="controls">
+                <button className="key primary" onClick={() => { void playSet(selected); }}>▶ Full recording · {clock(r.duration)}</button>
+                {r.sets.filter(s => s.reviewed).map((set, i) => <button className="key ghost" key={set.title} onClick={() => { void playSet(selected, set); }}>▶ {ROMAN[i] ?? set.title}</button>)}
+              </div>
+            </div>
+            <section className="jcard" aria-label="Sets and tracks">
+              {setsForDisplay(r).map((set, i) => <div className="side-panel" key={i}>
+                <div className="side-head"><span className="side">{SIDES[i] ?? '·'}</span><h3>{set.title}</h3><span className="eyebrow">{clock(r.tracks.slice(set.first, set.last + 1).reduce((n, t) => n + t.duration, 0))}</span>{set.reviewed && <button className="key" onClick={() => { void playSet(selected, set); }}>Play</button>}</div>
+                <ol className="tracks" start={set.first + 1}>{r.tracks.slice(set.first, set.last + 1).map(t => <li key={t.position} className={playingHere && track?.position === t.position ? 'now' : ''}><button onClick={() => { void playSet(selected, set.reviewed ? set : undefined, t.start); }} aria-current={playingHere && track?.position === t.position ? 'true' : undefined}><span className="t">{t.title}</span><small>{clock(t.duration)}</small></button></li>)}</ol>
+              </div>)}
+              <details className="credits">
+                <summary>Recording credits &amp; source</summary>
+                <dl><div><dt>Taped by</dt><dd>{r.taper || 'Not recorded'}</dd></div><div><dt>Transferred by</dt><dd>{r.transferer || 'Not recorded'}</dd></div><div><dt>Source lineage</dt><dd>{r.source}</dd></div></dl>
+                {!r.synthetic && <p><a href={`https://archive.org/details/${encodeURIComponent(r.id)}`} target="_blank" rel="noreferrer">Original recording at Internet Archive ↗</a></p>}
+                {selected.review.notes && <p>{selected.review.notes}</p>}
+                {r.warnings.map(w => <div className="note" key={w}><span className="sticker warn">Note</span><span>{w}</span></div>)}
+              </details>
+            </section>
+          </> : <p className="shelf-empty">Pull a tape from the rack to see its sets and credits.</p>}</article>
+        </div>
       </section>
+      </>}
       <footer className="footer">For the nights that keep going.<span>Source credits stay with every tape.</span></footer>
     </main>
-    <section className="player" aria-label="Audio player">
+
+    <section className={`deck ${playing ? 'is-playing' : ''}`} aria-label="Audio player">
       <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPending(false); setPlaying(false); setPlayerError('Audio source unavailable. Retry or choose another recording.'); }} onEnded={() => { if (playback?.mode === 'radio' && !advancing.current) { advancing.current = true; void tune(); } else setPlaying(false); }} />
-      <button className="play-toggle" onClick={() => { void toggle(); }} disabled={!playback} aria-label={playing ? 'Pause playback' : 'Play playback'}>{playing ? 'Ⅱ' : '▶'}</button>
-      <div className="playing-info"><span className="eyebrow">{playback ? `${playback.mode === 'radio' ? 'RADIO' : 'ON DEMAND'} / ${playback.label}` : 'READY WHEN YOU ARE'}</span><strong>{track?.title ?? 'Choose a set or tune in'}</strong><small>{playback?.entry.recording.venue ?? 'The Grateful Dead archive'}{pending && playback ? ' · Buffering…' : ''}</small></div>
-      <div className="transport"><div><span>{clock(position - (playback?.start ?? 0))}</span><input aria-label="Playback position" type="range" min={playback?.start ?? 0} max={playback?.end ?? 1} step="0.1" value={position} disabled={!playback} onChange={e => seek(Number(e.target.value))} /><span>{clock(playback ? playback.end - playback.start : 0)}</span></div>{playback?.mode === 'radio' && <button onClick={() => { void tune(); }}>Return to live</button>}</div>
-      <label className="volume">Volume<input type="range" min="0" max="1" step="0.05" value={volume} onChange={e => { const n = Number(e.target.value); setVolume(n); if (audio.current) audio.current.volume = n; }} /></label>
       {playerError && <p className="player-error" role="alert">{playerError} {playback && <button onClick={() => { if (playback.mode === 'radio') void tune(); else void load(playback, Math.max(playback.start, Math.min(position, playback.end - 0.1))); }}>Retry playback</button>}</p>}
+      <div className="inner">
+        <div className="window" aria-hidden="true"><span className="reel" /><span className="tape" /><span className="reel" /></div>
+        <div className="keys" role="group" aria-label="Transport">
+          <button className="key" onClick={() => { void toggle(); }} disabled={!playback} aria-pressed={playing} aria-label={playing ? 'Pause playback' : 'Play playback'}>{playing ? 'Ⅱ' : '▶'}</button>
+        </div>
+        <div className="now-playing">
+          <p className="eyebrow">{playback ? `${playback.mode === 'radio' ? 'Radio' : 'On demand'} · ${playback.label}` : 'Ready when you are'}</p>
+          <strong>{track?.title ?? 'Choose a set or tune in'}</strong>
+          <small>{playback?.entry.recording.venue ?? 'The Grateful Dead archive'}{playback ? ` · ${playback.entry.recording.date}` : ''}{pending && playback ? ' · Buffering…' : ''}</small>
+        </div>
+        <div className="transport">
+          <span>{clock(position - (playback?.start ?? 0))}</span>
+          <input aria-label="Playback position" type="range" min={playback?.start ?? 0} max={playback?.end ?? 1} step="0.1" value={position} disabled={!playback} onChange={e => seek(Number(e.target.value))} />
+          <span>{clock(playback ? playback.end - playback.start : 0)}</span>
+          {playback?.mode === 'radio' && <button className="return" onClick={() => { void tune(); }}>Return to live</button>}
+        </div>
+        <label className="volume">Volume<input type="range" min="0" max="1" step="0.05" value={volume} onChange={e => { const n = Number(e.target.value); setVolume(n); if (audio.current) audio.current.volume = n; }} /></label>
+      </div>
     </section>
   </>;
 }

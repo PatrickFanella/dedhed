@@ -61,6 +61,15 @@ tracks the owner-reported sound-quality concern and an alternate audience source
 | [#13 — Qualify both listening modes, transitions, and source failure behavior](https://git.subcult.tv/subculture-collective/dedhed/issues/13) | [#11](https://git.subcult.tv/subculture-collective/dedhed/issues/11) |
 | [#14 — Run and document a complete-concert private library and radio pilot](https://git.subcult.tv/subculture-collective/dedhed/issues/14) | [#12](https://git.subcult.tv/subculture-collective/dedhed/issues/12), [#13](https://git.subcult.tv/subculture-collective/dedhed/issues/13) |
 
+## Show index (added 2026-10-02)
+
+A collection-wide, metadata-only inventory (`source_items`) backs the calendar,
+date pages, On this day and full-text search over venues, places, credits and
+song titles. It extends issue #4's bounded discovery to the whole collection
+without acquiring audio. Date pages mark which source recordings are in the
+library and playable; the rest are listed with credits and a source link. The
+operator commands are in the [pilot runbook](docs/runbooks/private-pilot.md).
+
 ## After private qualification
 
 [#15 — Decide public release scope, distribution permissions, and hosting](https://git.subcult.tv/subculture-collective/dedhed/issues/15)

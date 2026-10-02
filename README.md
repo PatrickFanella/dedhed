@@ -6,7 +6,9 @@ using source tools from [Arkhiv](https://git.subcult.tv/subculture-collective/ar
 Browse reviewed recordings, play an individual set or full show, or **Tune in**
 to the station's current program. On-demand controls affect only that listener.
 The station keeps its own timeline. Recording credits and source links stay
-with each tape.
+with each tape. A calendar, date pages, On this day and collection-wide search
+read a metadata-only show index of the whole source collection; the index
+never implies playback.
 
 The first private implementation includes a PostgreSQL catalog, bounded metadata
 inspection, reviewed audience acquisition, continuous audio derivatives, set and
