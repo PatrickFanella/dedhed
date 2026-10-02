@@ -68,7 +68,7 @@ func WAV(seconds int, hz float64) []byte {
 	out.WriteString("data")
 	_ = binary.Write(&out, binary.LittleEndian, uint32(seconds*rate*2))
 	for i := 0; i < seconds*rate; i++ {
-		_ = binary.Write(&out, binary.LittleEndian, int16(2000*math.Sin(2*math.Pi*hz*float64(i)/rate)))
+		_ = binary.Write(&out, binary.LittleEndian, int16(2000*math.Sin(2*math.Pi*hz*(1+float64(i/(15*rate))*0.25)*float64(i)/rate)))
 	}
 	return out.Bytes()
 }
