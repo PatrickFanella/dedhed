@@ -1,30 +1,46 @@
 # Dedhed
 
-A Grateful Dead concert library with on-demand sets and a shared radio station,
-using source tools from [Arkhiv](https://git.subcult.tv/subculture-collective/arkhiv).
+> Private pilot. No public listening address or station.
 
-Browse reviewed recordings, play an individual set or full show, or **Tune in**
-to the station's current program. On-demand controls affect only that listener.
-The station keeps its own timeline. Recording credits and source links stay
-with each tape. A calendar, date pages, On this day and collection-wide search
-read a metadata-only show index of the whole source collection; the index
-never implies playback.
+![Dedhed: Find your way into a show. A shelf of sample concert-tape labels; private pilot.](docs/assets/readme/banner.png)
 
-The first private implementation includes a PostgreSQL catalog, bounded metadata
-inspection, reviewed audience acquisition, continuous audio derivatives, set and
-track seeking, a persisted station schedule, and backup/restore tools. The T3
-preview uses clearly labeled synthetic test tones. Real source playback and pilot
-qualification are separate; public deployment and relay are not enabled.
+**Pull a tape off the shelf, or tune in to what everyone else is hearing.**
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for setup and verification, the
-[roadmap](ROADMAP.md) for milestones and issues, and the
-[design proposal](docs/plans/0001-grateful-dead-radio.md) for source evidence and
-product decisions. Private operations are in the
-[pilot runbook](docs/runbooks/private-pilot.md).
+Dedhed is a Grateful Dead concert-tape library with on-demand shows and sets,
+plus a shared radio schedule. Date, venue, recording credits and source notes
+stay on the label.
 
-Track current work in [Gitea issues](https://git.subcult.tv/subculture-collective/dedhed/issues)
-and [milestones](https://git.subcult.tv/subculture-collective/dedhed/milestones).
-Source code is GPL-3.0-only; this license does not apply to acquired audio.
+**Private pilot. There is no public listening address or public station.**
 
-Current verification and open listening criteria are recorded in the
-[private pilot evidence report](docs/reports/private-pilot-2026-10-02.md).
+## Two ways to listen
+
+Pick a reviewed recording and play a set or a whole show. Your pause, seek and
+track changes affect your playback only.
+
+Or choose **Tune in**. The station follows its own persisted schedule, so
+listeners join the current program instead of starting a separate copy.
+
+## Read the label
+
+A metadata-only show index supports calendar browsing, date pages, On this day
+and collection-wide search. An entry in that index does not mean the recording
+is available to play. Playback is limited to reviewed recordings.
+
+Credits, track order and uncertain set boundaries remain visible. The tapes
+shown in the banner are sample labels, not a promise of those recordings in
+the pilot. Development previews use clearly labeled synthetic test tones.
+
+## About the pilot
+
+Real listening qualification and public relay are separate decisions; source
+availability does not grant permission to rebroadcast a recording.
+
+The [pilot evidence report](docs/reports/private-pilot-2026-10-02.md) records
+qualification and open listening criteria. The [roadmap](ROADMAP.md) and
+[Gitea issues](https://git.subcult.tv/subculture-collective/dedhed/issues) track
+the remaining work. Setup and verification are in
+[DEVELOPMENT.md](DEVELOPMENT.md).
+
+Built by [SUBCULT](https://subcult.tv). Source code is
+[GPL-3.0-only](LICENSE); that license does not cover acquired audio. Dedhed is
+an independent project and does not imply official endorsement.
