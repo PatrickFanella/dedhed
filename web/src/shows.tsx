@@ -3,7 +3,7 @@ import { clock, monthGrid, MONTHS, type DateItem, type DayCount, type SearchHit,
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error ?? 'The show index is unavailable'); }
+  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error ?? "The show index isn't answering. Try again in a moment."); }
   return res.json() as Promise<T>;
 }
 
@@ -41,7 +41,7 @@ export function OnThisDay() {
   if (!data) return <section className="today" aria-label="On this day"><p className="eyebrow">On this day</p><p className="status" role="status">Checking the calendar…</p></section>;
   return <section className="today" aria-label="On this day">
     <div className="today-head"><p className="eyebrow">On this day · {MONTHS[data.month - 1]} {data.day}</p><a href="#/calendar" className="eyebrow link">Open the calendar →</a></div>
-    {data.dates.length === 0 ? <p className="shelf-empty">No tapes in the collection for this date.</p> : <ul className="today-list">{data.dates.map(d => <li key={d.date}><a className="spine" href={`#/date/${d.date}`}><span className="tab">{d.date.slice(0, 4)}</span><span className={`label ${stock(d.items)}`}><span className="band">{d.date}</span><span className="venue">{d.venue || 'Venue unrecorded'}</span></span><span className="end">{d.items} {d.items === 1 ? 'tape' : 'tapes'}</span></a></li>)}</ul>}
+    {data.dates.length === 0 ? <p className="shelf-empty">No tape in the collection carries today&apos;s date.</p> : <ul className="today-list">{data.dates.map(d => <li key={d.date}><a className="spine" href={`#/date/${d.date}`}><span className="tab">{d.date.slice(0, 4)}</span><span className={`label ${stock(d.items)}`}><span className="band">{d.date}</span><span className="venue">{d.venue || 'Venue unrecorded'}</span></span><span className="end">{d.items} {d.items === 1 ? 'tape' : 'tapes'}</span></a></li>)}</ul>}
   </section>;
 }
 

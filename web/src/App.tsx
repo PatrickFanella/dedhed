@@ -7,7 +7,7 @@ const SIDES = 'ABCDEF';
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error ?? 'Unable to load this recording'); }
+  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error ?? "Dedhed isn't answering. Try again in a moment."); }
   return res.json() as Promise<T>;
 }
 
@@ -53,7 +53,7 @@ export default function App() {
     const a = audio.current; if (!a) return;
     const token = operation.current; advancing.current = false; stopAudio(); pendingSeek.current = target; setPlayback(next); setPosition(target); setPending(true);
     a.src = `/api/audio/${encodeURIComponent(next.entry.recording.id)}`; a.volume = volume; a.load();
-    try { await a.play(); } catch (e) { if (token === operation.current && e instanceof Error && e.name !== 'AbortError') setPlayerError('Playback could not start. Press Play to retry.'); }
+    try { await a.play(); } catch (e) { if (token === operation.current && e instanceof Error && e.name !== 'AbortError') setPlayerError("The tape didn't start. Press play to try again."); }
   }
   async function playSet(entry: Entry, set?: SetList, trackStart?: number) {
     operation.current++; const [start, end] = setBounds(entry.recording, set);
@@ -68,13 +68,13 @@ export default function App() {
       const target = Math.min(live.program.duration - 0.1, live.offset + (performance.now() - began) / 1000);
       setSelected(entry); setStation(live);
       await load({ entry, mode: 'radio', start: 0, end: live.program.duration, label: 'Shared radio', station: live }, target);
-    } catch (e) { if (op === operation.current) { setPlayerError(e instanceof Error ? e.message : 'Station unavailable'); setPending(false); } }
+    } catch (e) { if (op === operation.current) { setPlayerError(e instanceof Error ? e.message : "The station isn't answering. Try again, or pull a tape from the rack."); setPending(false); } }
   }
   async function toggle() {
     const a = audio.current; if (!a || !playback) return;
     if (!a.paused) { a.pause(); return; }
     if (position >= playback.end - 0.1) a.currentTime = playback.start;
-    try { await a.play(); } catch { setPlayerError('Audio unavailable. Retry playback or choose another recording.'); }
+    try { await a.play(); } catch { setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }
   }
   function metadataReady() {
     const a = audio.current; if (!a) return;
@@ -94,7 +94,7 @@ export default function App() {
   async function openFromIndex(id: string) {
     setOpening(id); setPlayerError('');
     try { const entry = await get<Entry>(`/api/recordings/${encodeURIComponent(id)}`); setSelected(entry); await playSet(entry); }
-    catch (e) { setPlayerError(e instanceof Error ? e.message : 'Recording unavailable'); }
+    catch (e) { setPlayerError(e instanceof Error ? e.message : "That tape isn't in the library."); }
     finally { setOpening(''); }
   }
   const r = selected?.recording;
@@ -115,17 +115,17 @@ export default function App() {
       {route.view === 'home' && <>
       <section className="intro">
         <div>
-          <p className="eyebrow">The Grateful Dead archive · private pilot</p>
+          <p className="eyebrow">Grateful Dead tapes · private pilot</p>
           <h1>Find your way<br />into a show.</h1>
-          <p className="lede">Choose a night. Play a set or the whole tape. Or tune in and hear what everyone else is hearing, at the same moment.</p>
+          <p className="lede">Pull a tape off the shelf and play one set, or let the whole show run. Or tune in to the station and hear whatever everyone else is hearing.</p>
         </div>
         <aside className={`station ${playback?.mode === 'radio' && playing ? 'is-playing' : ''}`} aria-label="Shared radio">
           <div className="head"><span className="sticker live">On air</span><span className="reel" aria-hidden="true" style={{ width: 28, height: 28, borderWidth: 2 }} /></div>
           <p className="eyebrow">Shared radio</p>
-          <h2>One station.<br />The same moment.</h2>
-          <p>{station ? (onAir ? `${onAir.venue || onAir.title} · ${onAir.date}` : 'Join the concert already in progress.') : stationError || 'Checking the station…'}</p>
+          <h2>Already in<br />progress.</h2>
+          <p>{station ? (onAir ? `${onAir.venue || onAir.title} · ${onAir.date}` : 'Tune in and you land where the reels are.') : stationError || 'Checking the station…'}</p>
           <button className="key primary" onClick={() => { void tune(); }} disabled={!station}>Tune in ↗</button>
-          {station?.next && <small>UP NEXT · {nextName ?? 'Next scheduled concert'}</small>}
+          {station?.next && <small>UP NEXT · {nextName ?? 'Next tape on the schedule'}</small>}
         </aside>
       </section>
       <OnThisDay />
@@ -141,8 +141,8 @@ export default function App() {
         <div className="columns">
           <div>
             {catalogError && <p className="status" role="alert">{catalogError}</p>}
-            {loading && <p className="status" role="status">Pulling the tape shelf…</p>}
-            {!loading && !catalogError && items.length === 0 && <p className="shelf-empty">No shows match this search. Try another date or venue.</p>}
+            {loading && <p className="status" role="status">Pulling tapes off the shelf…</p>}
+            {!loading && !catalogError && items.length === 0 && <p className="shelf-empty">Nothing on the shelf matches. Try another date or venue.</p>}
             {items.length > 0 && <div className="rack" role="list">
               {items.map(entry => { const rec = entry.recording; const isSel = selected?.recording.id === rec.id; const unreviewed = !rec.sets.some(s => s.reviewed); return <div className="slot" role="listitem" key={rec.id}>
                 <button className="spine" onClick={() => setSelected(entry)} aria-pressed={isSel}>
@@ -193,21 +193,21 @@ export default function App() {
         </div>
       </section>
       </>}
-      <footer className="footer">For the nights that keep going.<span>Source credits stay with every tape.</span></footer>
+      <footer className="footer">Labelled in pencil where we weren&apos;t sure.<span>Source credits stay with every tape.</span></footer>
     </main>
 
     <section className={`deck ${playing ? 'is-playing' : ''}`} aria-label="Audio player">
-      <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPending(false); setPlaying(false); setPlayerError('Audio source unavailable. Retry or choose another recording.'); }} onEnded={() => { if (playback?.mode === 'radio' && !advancing.current) { advancing.current = true; void tune(); } else setPlaying(false); }} />
-      {playerError && <p className="player-error" role="alert">{playerError} {playback && <button onClick={() => { if (playback.mode === 'radio') void tune(); else void load(playback, Math.max(playback.start, Math.min(position, playback.end - 0.1))); }}>Retry playback</button>}</p>}
+      <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPending(false); setPlaying(false); setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }} onEnded={() => { if (playback?.mode === 'radio' && !advancing.current) { advancing.current = true; void tune(); } else setPlaying(false); }} />
+      {playerError && <p className="player-error" role="alert">{playerError} {playback && <button onClick={() => { if (playback.mode === 'radio') void tune(); else void load(playback, Math.max(playback.start, Math.min(position, playback.end - 0.1))); }}>Try again</button>}</p>}
       <div className="inner">
         <div className="window" aria-hidden="true"><span className="reel" /><span className="tape" /><span className="reel" /></div>
         <div className="keys" role="group" aria-label="Transport">
-          <button className="key" onClick={() => { void toggle(); }} disabled={!playback} aria-pressed={playing} aria-label={playing ? 'Pause playback' : 'Play playback'}>{playing ? 'Ⅱ' : '▶'}</button>
+          <button className="key" onClick={() => { void toggle(); }} disabled={!playback} aria-pressed={playing} aria-label={playing ? 'Pause' : 'Play'}>{playing ? 'Ⅱ' : '▶'}</button>
         </div>
         <div className="now-playing">
-          <p className="eyebrow">{playback ? `${playback.mode === 'radio' ? 'Radio' : 'On demand'} · ${playback.label}` : 'Ready when you are'}</p>
-          <strong>{track?.title ?? 'Choose a set or tune in'}</strong>
-          <small>{playback?.entry.recording.venue ?? 'The Grateful Dead archive'}{playback ? ` · ${playback.entry.recording.date}` : ''}{pending && playback ? ' · Buffering…' : ''}</small>
+          <p className="eyebrow">{playback ? (playback.mode === 'radio' ? playback.label : `On demand · ${playback.label}`) : 'Nothing in the deck'}</p>
+          <strong>{track?.title ?? 'Pull a tape or tune in'}</strong>
+          <small>{playback?.entry.recording.venue ?? 'Grateful Dead tapes'}{playback ? ` · ${playback.entry.recording.date}` : ''}{pending && playback ? ' · Buffering…' : ''}</small>
         </div>
         <div className="transport">
           <span>{clock(position - (playback?.start ?? 0))}</span>

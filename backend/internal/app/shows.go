@@ -17,19 +17,19 @@ func (s *Server) calendar(w http.ResponseWriter, r *http.Request) {
 	years, err := s.DB.Years(r.Context())
 	if err != nil {
 		slog.Error("calendar read failed", "error", err)
-		write(w, 503, map[string]string{"error": "show index unavailable"})
+		write(w, 503, map[string]string{"error": "The show index isn't answering. Try again in a moment."})
 		return
 	}
 	out := map[string]any{"years": years}
 	if y := r.URL.Query().Get("year"); y != "" {
 		year, err := strconv.Atoi(y)
 		if err != nil {
-			write(w, 400, map[string]string{"error": "invalid year"})
+			write(w, 400, map[string]string{"error": "That year isn't on the calendar."})
 			return
 		}
 		days, err := s.DB.Days(r.Context(), year)
 		if err != nil {
-			write(w, 400, map[string]string{"error": "invalid year"})
+			write(w, 400, map[string]string{"error": "That year isn't on the calendar."})
 			return
 		}
 		out["year"] = year
@@ -49,7 +49,7 @@ func (s *Server) date(w http.ResponseWriter, r *http.Request) {
 	date := r.PathValue("date")
 	items, err := s.DB.ItemsOn(r.Context(), date)
 	if err != nil {
-		write(w, 400, map[string]string{"error": "invalid date"})
+		write(w, 400, map[string]string{"error": "That isn't a date the calendar can read."})
 		return
 	}
 	entries, ok := s.entries(w, r)
