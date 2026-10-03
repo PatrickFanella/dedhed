@@ -59,7 +59,7 @@ func (s *Server) entries(w http.ResponseWriter, r *http.Request) (map[string]mus
 	e, err := s.DB.Entries(r.Context())
 	if err != nil {
 		slog.Error("catalog read failed", "error", err)
-		write(w, 503, map[string]string{"error": "catalog unavailable"})
+		write(w, 503, map[string]string{"error": "The catalog isn't answering. Try again in a moment."})
 		return nil, false
 	}
 	return e, true
@@ -77,7 +77,7 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 	if page > 10000 {
-		write(w, 400, map[string]string{"error": "page out of range"})
+		write(w, 400, map[string]string{"error": "That page is past the end of the shelf."})
 		return
 	}
 	list := []music.Entry{}
@@ -111,7 +111,7 @@ func (s *Server) detail(w http.ResponseWriter, r *http.Request) {
 	}
 	e, ok := entries[r.PathValue("id")]
 	if !ok || !eligible(e) {
-		write(w, 404, map[string]string{"error": "recording unavailable"})
+		write(w, 404, map[string]string{"error": "That tape isn't in the library."})
 		return
 	}
 	write(w, 200, e)
@@ -123,7 +123,7 @@ func (s *Server) audio(w http.ResponseWriter, r *http.Request) {
 	}
 	e, ok := entries[r.PathValue("id")]
 	if !ok || !eligible(e) {
-		write(w, 404, map[string]string{"error": "recording unavailable"})
+		write(w, 404, map[string]string{"error": "That tape isn't in the library."})
 		return
 	}
 	f, err := s.Root.Open(e.Media)
@@ -148,7 +148,7 @@ func (s *Server) station(w http.ResponseWriter, r *http.Request) {
 	}
 	schedule, err := s.DB.Schedule(r.Context())
 	if err != nil {
-		write(w, 503, map[string]string{"error": "station schedule unavailable"})
+		write(w, 503, map[string]string{"error": "The station schedule isn't answering. Try again, or play a set from the library."})
 		return
 	}
 	now := time.Now
@@ -160,7 +160,7 @@ func (s *Server) station(w http.ResponseWriter, r *http.Request) {
 		_, err = s.Root.Stat(entries[state.Program.RecordingID].Media)
 	}
 	if err != nil {
-		write(w, 503, map[string]string{"error": "station unavailable; retry or play a set from the library"})
+		write(w, 503, map[string]string{"error": "The station is off the air right now. Try again, or play a set from the library."})
 		return
 	}
 	write(w, 200, state)
