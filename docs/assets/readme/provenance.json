@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "product": "dedhed",
+  "selected_for": "Gitea marketing README",
+  "source_repository": "subculture-collective/subcult-tv",
+  "source_revision": "49cde4b00db3149d15e107b642354ce50538fd10",
+  "source_path": "studio/branding/library/brands/dedhed/social/banner-x-bluesky.png",
+  "source_sha256": "28e9930b1a23d713a046f8af905daa18aca27bd1f971a1da892c8aab67a521f7",
+  "source_manifest_path": "studio/branding/library/brands/dedhed/asset-manifest.json",
+  "source_manifest_sha256": "c6721447da2413a27c86142cf68ec85cbfdba0caf42b183ccdea638e86707298",
+  "destination_path": "docs/assets/readme/banner.png",
+  "destination_sha256": "28e9930b1a23d713a046f8af905daa18aca27bd1f971a1da892c8aab67a521f7",
+  "voice_source": "studio/content/VOICE.md",
+  "voice_source_sha256": "5b3427970e133693dcea70660de38bb8ffae4b242b5d178b4e17cbdcccff43bd",
+  "alt_text": "Dedhed: Find your way into a show. A shelf of sample concert-tape labels; private pilot.",
+  "publication_scope": "README artwork only; no site deployment, social dispatch or media relay"
+}
