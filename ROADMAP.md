@@ -1,6 +1,6 @@
 # Dedhed roadmap
 
-Status: the owner confirmed preview access and sound quality and approved a two-recording noncommercial public pilot. Public deployment qualification and natural daily maintenance remain in progress.
+Status: the owner confirmed preview access and sound quality and approved a two-recording noncommercial public pilot. The approved pilot is live at https://dedhed.subcult.tv; natural daily maintenance and longer stability remain under observation.
 Updated: 2026-10-04. Delivery is ordered by evidence gates; no release dates are committed.
 
 Dedhed starts with the Grateful Dead music collection at Internet Archive. V1
@@ -106,4 +106,4 @@ Fillmore East and Barton Hall scope. Public approvals are separate from private
 reviews, bind source and media hashes, and filter every audience-facing catalog,
 search/calendar, audio and station lookup. Daily renewal verifies the exact
 approved audio before replacing the schedule. Deployment, hosted checks,
-independent public restore and natural daily runs require their own evidence.
+independent public restore passed. Natural daily runs remain pending. See the [release evidence](docs/reports/public-pilot-2026-10-04.md).
