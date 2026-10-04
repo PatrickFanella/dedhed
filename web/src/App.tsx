@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAudioControls } from '@subcult/archive-viewer/audio';
 import { clock, currentTrack, setBounds, type Entry, type Playback, type Recording, type SetList, type Station } from './types';
 import { CalendarView, DateView, OnThisDay, useRoute } from './shows';
 
@@ -26,10 +27,13 @@ export default function App() {
   const [query, setQuery] = useState(''), [year, setYear] = useState(''), [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Entry | null>(null), [station, setStation] = useState<Station | null>(null);
   const [loading, setLoading] = useState(true), [catalogError, setCatalogError] = useState(''), [stationError, setStationError] = useState('');
-  const [playback, setPlayback] = useState<Playback | null>(null), [playing, setPlaying] = useState(false);
-  const [position, setPosition] = useState(0), [playerError, setPlayerError] = useState(''), [volume, setVolume] = useState(0.7), [pending, setPending] = useState(false);
+  const [playback, setPlayback] = useState<Playback | null>(null);
   const route = useRoute(); const [opening, setOpening] = useState('');
   const audio = useRef<HTMLAudioElement>(null), pendingSeek = useRef<number | null>(null), operation = useRef(0), advancing = useRef(false);
+  const controls=useAudioControls({audio,start:playback?.start??0,end:playback?.end??1,initialVolume:0.7,
+    onEnded:()=>{if(playback?.mode==='radio'&&!advancing.current){advancing.current=true;void tune();}}});
+  const {position,playing,pending,error:playerError,volume,seek,toggle,setError:setPlayerError,setPlaying,setPending}=controls;
+
 
   useEffect(() => {
     let active = true;
@@ -51,7 +55,7 @@ export default function App() {
   function stopAudio() { audio.current?.pause(); setPlaying(false); setPlayerError(''); }
   async function load(next: Playback, target: number) {
     const a = audio.current; if (!a) return;
-    const token = operation.current; advancing.current = false; stopAudio(); pendingSeek.current = target; setPlayback(next); setPosition(target); setPending(true);
+    const token = operation.current; advancing.current = false; stopAudio(); pendingSeek.current = target; setPlayback(next); controls.reset(target);
     a.src = `/api/audio/${encodeURIComponent(next.entry.recording.id)}`; a.volume = volume; a.load();
     try { await a.play(); } catch (e) { if (token === operation.current && e instanceof Error && e.name !== 'AbortError') setPlayerError("The tape didn't start. Press play to try again."); }
   }
@@ -70,26 +74,11 @@ export default function App() {
       await load({ entry, mode: 'radio', start: 0, end: live.program.duration, label: 'Shared radio', station: live }, target);
     } catch (e) { if (op === operation.current) { setPlayerError(e instanceof Error ? e.message : "The station isn't answering. Try again, or pull a tape from the rack."); setPending(false); } }
   }
-  async function toggle() {
-    const a = audio.current; if (!a || !playback) return;
-    if (!a.paused) { a.pause(); return; }
-    if (position >= playback.end - 0.1) a.currentTime = playback.start;
-    try { await a.play(); } catch { setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }
-  }
   function metadataReady() {
     const a = audio.current; if (!a) return;
-    if (pendingSeek.current !== null) { a.currentTime = pendingSeek.current; pendingSeek.current = null; }
+    if (pendingSeek.current !== null) { seek(pendingSeek.current); pendingSeek.current = null; setPending(false); }
   }
-  function timeUpdate() {
-    const a = audio.current; if (!a || !playback || pendingSeek.current !== null) return;
-    setPosition(a.currentTime);
-    if (a.currentTime >= playback.end - 0.04) {
-      a.pause();
-      if (playback.mode === 'radio' && !advancing.current) { advancing.current = true; void tune(); }
-      else { a.currentTime = playback.end; setPosition(playback.end); }
-    }
-  }
-  function seek(value: number) { if (audio.current && playback) { audio.current.currentTime = Math.min(playback.end, Math.max(playback.start, value)); setPosition(audio.current.currentTime); } }
+  function timeUpdate() { if(pendingSeek.current===null&&playback)controls.events.onTimeUpdate(); }
 
   async function openFromIndex(id: string) {
     setOpening(id); setPlayerError('');
@@ -197,7 +186,7 @@ export default function App() {
     </main>
 
     <section className={`deck ${playing ? 'is-playing' : ''}`} aria-label="Audio player">
-      <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPending(false); setPlaying(false); setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }} onEnded={() => { if (playback?.mode === 'radio' && !advancing.current) { advancing.current = true; void tune(); } else setPlaying(false); }} />
+      <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPending(false); setPlaying(false); setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }} onEnded={controls.events.onEnded} />
       {playerError && <p className="player-error" role="alert">{playerError} {playback && <button onClick={() => { if (playback.mode === 'radio') void tune(); else void load(playback, Math.max(playback.start, Math.min(position, playback.end - 0.1))); }}>Try again</button>}</p>}
       <div className="inner">
         <div className="window" aria-hidden="true"><span className="reel" /><span className="tape" /><span className="reel" /></div>
@@ -215,7 +204,7 @@ export default function App() {
           <span>{clock(playback ? playback.end - playback.start : 0)}</span>
           {playback?.mode === 'radio' && <button className="return" onClick={() => { void tune(); }}>Return to live</button>}
         </div>
-        <label className="volume">Volume<input type="range" min="0" max="1" step="0.05" value={volume} onChange={e => { const n = Number(e.target.value); setVolume(n); if (audio.current) audio.current.volume = n; }} /></label>
+        <label className="volume">Volume<input type="range" min="0" max="1" step="0.05" value={volume} onChange={e => { controls.changeVolume(Number(e.target.value)); }} /></label>
       </div>
     </section>
   </>;
