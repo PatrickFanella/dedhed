@@ -106,4 +106,60 @@ func TestImportReviewAndRecoveryState(t *testing.T) {
 	if err = d.Review(ctx, r.ID, music.Review{Kind: "soundboard", Acquisition: true}); err == nil {
 		t.Fatal("soundboard acquired")
 	}
+	entries, err = d.Entries(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := entries[r.ID]
+	approval := PublicApproval{Approved: true, SourceHash: e.SourceHash, MediaSHA256: e.SHA256, PolicyBasis: "test owner decision, noncommercial audience policy", Reviewer: "test"}
+	bad := approval
+	bad.SourceHash = music.Digest([]byte("wrong"))
+	if err = d.ApprovePublic(ctx, r.ID, bad); err == nil {
+		t.Fatal("approved stale source")
+	}
+	if err = d.ApprovePublic(ctx, r.ID, approval); err != nil {
+		t.Fatal(err)
+	}
+	public := &DB{Pool: pool, Public: true}
+	if visible, err := public.Entries(ctx); err != nil || len(visible) != 1 {
+		t.Fatal("approved recording missing", visible, err)
+	}
+	if err = public.ApprovePublic(ctx, r.ID, approval); err == nil {
+		t.Fatal("serving connection changed approval")
+	}
+	if err = d.UpsertItems(ctx, []music.SourceItem{{ID: r.ID, ShowDate: "1977-05-08", Title: "Approved", Kind: "audience"}, {ID: "hidden", ShowDate: "1969-06-21", Title: "Private"}}); err != nil {
+		t.Fatal(err)
+	}
+	if years, err := public.Years(ctx); err != nil || len(years) != 1 || years[0].Year != 1977 {
+		t.Fatal("private inventory leaked", years, err)
+	}
+	if hits, n, err := public.Search(ctx, "", "", 1, 20); err != nil || n != 1 || len(hits) != 1 {
+		t.Fatal("public search scope", hits, n, err)
+	}
+	if err = d.Import(ctx, r, []byte(`{"raw":3}`)); err != nil {
+		t.Fatal(err)
+	}
+	if visible, err := public.Entries(ctx); err != nil || len(visible) != 0 {
+		t.Fatal("source refresh retained approval", visible, err)
+	}
+	e2, _ := d.Entries(ctx)
+	approval.SourceHash = e2[r.ID].SourceHash
+	if err = d.ApprovePublic(ctx, r.ID, approval); err != nil {
+		t.Fatal(err)
+	}
+	if err = d.Media(ctx, r.ID, "replacement.wav", music.Digest([]byte("replacement")), nil); err != nil {
+		t.Fatal(err)
+	}
+	if visible, err := public.Entries(ctx); err != nil || len(visible) != 0 {
+		t.Fatal("media replacement retained approval", visible, err)
+	}
+	approval.Approved = false
+	if err = d.ApprovePublic(ctx, r.ID, approval); err != nil {
+		t.Fatal(err)
+	}
+	var history int
+	if err = pool.QueryRow(ctx, "SELECT count(*) FROM public_approval_history").Scan(&history); err != nil || history != 3 {
+		t.Fatal("decision history missing", history, err)
+	}
+
 }

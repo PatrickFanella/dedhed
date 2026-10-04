@@ -1,6 +1,6 @@
 # Dedhed
 
-> Private pilot. No public listening address or station.
+> Two-recording public pilot approved; deployment qualification is underway.
 
 ![Dedhed: Find your way into a show. A shelf of sample concert-tape labels; private pilot.](docs/assets/readme/banner.png)
 
@@ -10,7 +10,7 @@ Dedhed is a Grateful Dead concert-tape library with on-demand shows and sets,
 plus a shared radio schedule. Date, venue, recording credits and source notes
 stay on the label.
 
-**Private pilot. There is no public listening address or public station.**
+**The owner approved a free public pilot with the reviewed Fillmore East and Barton Hall audience recordings.** Its [release runbook](docs/runbooks/public-pilot.md) records the exact scope, public approval controls and withdrawal procedure. Deployment and natural maintenance evidence remain separate.
 
 ## Two ways to listen
 

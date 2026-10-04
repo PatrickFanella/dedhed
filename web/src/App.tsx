@@ -104,7 +104,7 @@ export default function App() {
       {route.view === 'home' && <>
       <section className="intro">
         <div>
-          <p className="eyebrow">Grateful Dead tapes · private pilot</p>
+          <p className="eyebrow">Grateful Dead tapes · {import.meta.env.VITE_DEDHED_AUDIENCE === 'public' ? 'free listening' : 'private pilot'}</p>
           <h1>Find your way<br />into a show.</h1>
           <p className="lede">Pull a tape off the shelf and play one set, or let the whole show run. Or tune in to the station and hear whatever everyone else is hearing.</p>
         </div>
@@ -183,6 +183,10 @@ export default function App() {
       </section>
       </>}
       <footer className="footer">Labelled in pencil where we weren&apos;t sure.<span>Source credits stay with every tape.</span></footer>
+      {import.meta.env.VITE_DEDHED_AUDIENCE === 'public' && <section aria-label="Trading policy" className="intro">
+        <div><h2>Keep the tapes free.</h2><p>This is a free, noncommercial audience-recording library. No advertising, paid access, sale of listener data, or commercial promotion funds this site. Copyright belongs to the performers, writers and publishers. We respect their rights and remove access when permission is withdrawn.</p>
+        <p>Taper and transfer credits stay with each recording. The band can withdraw permission for noncommercial digital exchange. Read the <a href="https://archive.org/details/GratefulDead">Grateful Dead trading notice</a> and <a href="https://archivesupport.zendesk.com/hc/en-us/articles/360014759692-Rights">Internet Archive policy</a>. For a correction or removal, contact <a href="mailto:info@subcult.tv">info@subcult.tv</a>.</p></div>
+      </section>}
     </main>
 
     <section className={`deck ${playing ? 'is-playing' : ''}`} aria-label="Audio player">

@@ -1,7 +1,7 @@
 # Dedhed roadmap
 
-Status: private implementation under verification. Pilot qualification is in progress; sound quality and browser criteria remain open. Public deployment remains deferred.
-Updated: 2026-10-02. Delivery is ordered by evidence gates; no release dates are committed.
+Status: the owner confirmed preview access and sound quality and approved a two-recording noncommercial public pilot. Public deployment qualification and natural daily maintenance remain in progress.
+Updated: 2026-10-04. Delivery is ordered by evidence gates; no release dates are committed.
 
 Dedhed starts with the Grateful Dead music collection at Internet Archive. V1
 combines a browsable concert library, on-demand playback of individual sets and
@@ -98,3 +98,12 @@ keeps that issue open even if its code has merged.
 Gitea issues are authoritative for current task state and dependencies. This
 document preserves milestone scope and ordering; update it when scope changes.
 The tracking issue checklist should be updated as work is qualified.
+
+## Two-recording public pilot, October 4
+
+The [public pilot runbook](docs/runbooks/public-pilot.md) records the approved
+Fillmore East and Barton Hall scope. Public approvals are separate from private
+reviews, bind source and media hashes, and filter every audience-facing catalog,
+search/calendar, audio and station lookup. Daily renewal verifies the exact
+approved audio before replacing the schedule. Deployment, hosted checks,
+independent public restore and natural daily runs require their own evidence.

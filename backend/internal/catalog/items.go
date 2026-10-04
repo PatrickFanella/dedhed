@@ -71,7 +71,7 @@ type DayCount struct {
 }
 
 func (d *DB) Years(ctx context.Context) ([]YearCount, error) {
-	rows, err := d.Pool.Query(ctx, `SELECT EXTRACT(YEAR FROM show_date)::int, count(*)::int, count(DISTINCT show_date)::int FROM source_items WHERE show_date IS NOT NULL GROUP BY 1 ORDER BY 1`)
+	rows, err := d.Pool.Query(ctx, `SELECT EXTRACT(YEAR FROM show_date)::int, count(*)::int, count(DISTINCT show_date)::int FROM source_items WHERE `+d.publicPredicate()+` AND show_date IS NOT NULL GROUP BY 1 ORDER BY 1`)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (d *DB) Days(ctx context.Context, year int) ([]DayCount, error) {
 	if year < 1960 || year > 2100 {
 		return nil, fmt.Errorf("year out of range")
 	}
-	rows, err := d.Pool.Query(ctx, `SELECT to_char(show_date,'YYYY-MM-DD'), count(*)::int, mode() WITHIN GROUP (ORDER BY venue) FROM source_items WHERE show_date >= make_date($1,1,1) AND show_date < make_date($1+1,1,1) GROUP BY show_date ORDER BY show_date`, year)
+	rows, err := d.Pool.Query(ctx, `SELECT to_char(show_date,'YYYY-MM-DD'), count(*)::int, mode() WITHIN GROUP (ORDER BY venue) FROM source_items WHERE `+d.publicPredicate()+` AND show_date >= make_date($1,1,1) AND show_date < make_date($1+1,1,1) GROUP BY show_date ORDER BY show_date`, year)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (d *DB) OnThisDay(ctx context.Context, month, day int) ([]DayCount, error) 
 	if month < 1 || month > 12 || day < 1 || day > 31 {
 		return nil, fmt.Errorf("month or day out of range")
 	}
-	rows, err := d.Pool.Query(ctx, `SELECT to_char(show_date,'YYYY-MM-DD'), count(*)::int, mode() WITHIN GROUP (ORDER BY venue) FROM source_items WHERE EXTRACT(MONTH FROM show_date)=$1 AND EXTRACT(DAY FROM show_date)=$2 GROUP BY show_date ORDER BY show_date`, month, day)
+	rows, err := d.Pool.Query(ctx, `SELECT to_char(show_date,'YYYY-MM-DD'), count(*)::int, mode() WITHIN GROUP (ORDER BY venue) FROM source_items WHERE `+d.publicPredicate()+` AND EXTRACT(MONTH FROM show_date)=$1 AND EXTRACT(DAY FROM show_date)=$2 GROUP BY show_date ORDER BY show_date`, month, day)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (d *DB) ItemsOn(ctx context.Context, date string) ([]music.SourceItem, erro
 	if !dateShape.MatchString(date) {
 		return nil, fmt.Errorf("invalid date")
 	}
-	rows, err := d.Pool.Query(ctx, `SELECT `+itemColumns+` FROM source_items WHERE show_date=$1::date ORDER BY avg_rating DESC, downloads DESC, id`, date)
+	rows, err := d.Pool.Query(ctx, `SELECT `+itemColumns+` FROM source_items WHERE `+d.publicPredicate()+` AND show_date=$1::date ORDER BY avg_rating DESC, downloads DESC, id`, date)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (d *DB) Search(ctx context.Context, q, year string, page, size int) ([]Sear
 		return nil, 0, fmt.Errorf("query too long")
 	}
 	query := strings.Join(words, " & ")
-	where := `show_date IS NOT NULL`
+	where := d.publicPredicate() + ` AND show_date IS NOT NULL`
 	args := []any{}
 	if query != "" {
 		args = append(args, query)

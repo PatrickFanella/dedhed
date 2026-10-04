@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -30,7 +32,7 @@ func env(key, def string) string {
 }
 func run() error {
 	if len(os.Args) < 2 {
-		return fmt.Errorf("usage: dedhed migrate|seed|discover|inventory-scrape|inventory-fetch|inventory-import|import|review|media|schedule|report|serve")
+		return fmt.Errorf("usage: dedhed migrate|seed|discover|inventory-scrape|inventory-fetch|inventory-import|import|review|public-review|public-schedule|media|schedule|report|serve")
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -44,6 +46,7 @@ func run() error {
 	sha := f.String("sha256", "", "verified media SHA-256")
 	dir := f.String("dir", "", "inventory directory")
 	query := f.String("query", "collection:GratefulDead", "source collection query")
+	hours := f.Int("hours", 168, "public schedule horizon, 1-168 hours")
 	limit := f.Int("limit", 0, "maximum items to fetch this run (0 = all)")
 	concurrency := f.Int("concurrency", 2, "parallel metadata requests (1-4)")
 	delay := f.Duration("delay", 250*time.Millisecond, "pause after each metadata request")
@@ -152,6 +155,16 @@ func run() error {
 			return err
 		}
 		return d.Import(ctx, r, b)
+	case "public-review":
+		b, err := os.ReadFile(*file)
+		if err != nil {
+			return err
+		}
+		var approval catalog.PublicApproval
+		if err = json.Unmarshal(b, &approval); err != nil {
+			return err
+		}
+		return d.ApprovePublic(ctx, *id, approval)
 	case "review":
 		b, err := os.ReadFile(*file)
 		if err != nil {
@@ -182,6 +195,59 @@ func run() error {
 			return fmt.Errorf("media hash mismatch")
 		}
 		return d.Media(ctx, *id, *media, *sha, recording)
+	case "public-schedule":
+		if *hours < 1 || *hours > 168 || *ids == "" {
+			return fmt.Errorf("public-schedule requires explicit ids and 1-168 hours")
+		}
+		d.Public = true
+		entries, err := d.Entries(ctx)
+		if err != nil {
+			return err
+		}
+		selected := strings.Split(*ids, ",")
+		if len(selected) > 12 {
+			return fmt.Errorf("too many scheduled recordings")
+		}
+		seen := map[string]bool{}
+		for _, id := range selected {
+			e, ok := entries[id]
+			if !ok || seen[id] || e.Recording.Duration <= 0 {
+				return fmt.Errorf("schedule requires unique approved recordings: %s", id)
+			}
+			seen[id] = true
+			mediaRoot, err := os.OpenRoot(root)
+			if err != nil {
+				return err
+			}
+			file, err := mediaRoot.Open(e.Media)
+			if err != nil {
+				mediaRoot.Close()
+				return err
+			}
+			hash := sha256.New()
+			_, err = io.Copy(hash, file)
+			file.Close()
+			mediaRoot.Close()
+			if err != nil {
+				return err
+			}
+			if fmt.Sprintf("%x", hash.Sum(nil)) != e.SHA256 {
+				return fmt.Errorf("scheduled media hash mismatch: %s", id)
+			}
+		}
+		start := time.Now().UTC().Truncate(time.Hour)
+		end := start.Add(time.Duration(*hours) * time.Hour)
+		schedule := music.Schedule{Revision: "public-" + start.Format("20060102T150405Z"), Programs: []music.Program{}}
+		for i := 0; start.Before(end); i++ {
+			id := selected[i%len(selected)]
+			duration := entries[id].Recording.Duration
+			schedule.Programs = append(schedule.Programs, music.Program{RecordingID: id, Start: start, Duration: duration})
+			start = start.Add(time.Duration(duration * float64(time.Second)))
+		}
+		if err = d.SaveSchedule(ctx, schedule); err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{"revision": schedule.Revision, "programs": len(schedule.Programs), "ends_at": start})
 	case "schedule":
 		b, err := os.ReadFile(*file)
 		if err != nil {
@@ -199,6 +265,11 @@ func run() error {
 		}
 		return json.NewEncoder(os.Stdout).Encode(entries)
 	case "serve":
+		audience := env("DEDHED_AUDIENCE", "private")
+		if audience != "private" && audience != "public" {
+			return fmt.Errorf("invalid DEDHED_AUDIENCE")
+		}
+		d.Public = audience == "public"
 		mediaRoot, err := os.OpenRoot(root)
 		if err != nil {
 			return err
