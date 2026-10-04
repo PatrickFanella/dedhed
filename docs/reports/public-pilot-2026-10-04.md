@@ -12,7 +12,7 @@ Caddy validation and reload passed without restart. Only the new Dedhed block wa
 
 Manual replay and backup passed. Systemd `dedhed-public-monitor.timer` checks public scope, runtime identity, station freshness and both audio ranges every five minutes; its first natural run passed at 19:26:57 UTC. Daily replay is 00:25 UTC; backup is 00:45 UTC. The maintenance lock serializes jobs. The backup cap is 16 GiB, allowance 1 GiB and reserve 1 GiB; exhaustion fails without pruning evidence. External alert delivery and longer stability are not qualified. Initial monitor failures exposed a default Python user-agent rejection and case-sensitive lookup of the edge's lowercase range header; the operator now identifies itself and normalizes response header names. Real HTTP regression tests preserve 403 rejection and uncontaminated 503 recovery.
 
-Required isolated `make verify` passed for the release. Both hosted checks passed on runtime revision `3601a085`; later operations/documentation changes are tracked separately in [PR #30](https://git.subcult.tv/subculture-collective/dedhed/pulls/30). Source PR state and deployed artifact proof remain separate.
+Required isolated `make verify` passed for the release. Both hosted checks passed on runtime revision `3601a085`; PR #30 merged; later operations/documentation changes are tracked separately in [PR #31](https://git.subcult.tv/subculture-collective/dedhed/pulls/31). Source PR state and deployed artifact proof remain separate.
 
 The [public runbook](../runbooks/public-pilot.md) defines exact source approval and withdrawal. Private operational credentials, acquired media, dumps, configurations and detailed receipts remain outside Git.
 
