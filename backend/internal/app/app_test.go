@@ -124,6 +124,58 @@ func TestPublishedAudioRangeAndSourceOutage(t *testing.T) {
 	if resp.StatusCode != 206 || len(b) != 44 || string(b[:4]) != "RIFF" {
 		t.Fatalf("range response %d %d", resp.StatusCode, len(b))
 	}
+	// A public server must never inherit private publication eligibility.
+	pub := seeded["synthetic-1977"]
+	rejected := catalog.PublicApproval{Approved: true, SourceHash: pub.SourceHash, MediaSHA256: pub.SHA256, PolicyBasis: "test", Reviewer: "test"}
+	if err = db.ApprovePublic(ctx, pub.Recording.ID, rejected); err == nil {
+		t.Fatal("synthetic public approval accepted")
+	}
+	pub.Recording.ID = "audience-public"
+	pub.Recording.Synthetic = false
+	pub.Recording.Kind = "audience"
+	raw := []byte(`{"public":true}`)
+	if err = db.Import(ctx, pub.Recording, raw); err != nil {
+		t.Fatal(err)
+	}
+	if err = db.Media(ctx, pub.Recording.ID, pub.Media, pub.SHA256, nil); err != nil {
+		t.Fatal(err)
+	}
+	pub.Review.Kind = "audience"
+	if err = db.Review(ctx, pub.Recording.ID, pub.Review); err != nil {
+		t.Fatal(err)
+	}
+	approval := catalog.PublicApproval{Approved: true, SourceHash: music.Digest(raw), MediaSHA256: pub.SHA256, PolicyBasis: "test noncommercial audience", Reviewer: "test"}
+	if err = db.ApprovePublic(ctx, pub.Recording.ID, approval); err != nil {
+		t.Fatal(err)
+	}
+	publicDB := &catalog.DB{Pool: db.Pool, Public: true}
+	publicServer := httptest.NewServer((&Server{DB: publicDB, Root: root}).Handler())
+	defer publicServer.Close()
+	for _, tc := range []struct {
+		path   string
+		status int
+	}{{"/api/recordings/audience-public", 200}, {"/api/recordings/synthetic-1977", 404}, {"/api/audio/synthetic-1977", 404}, {"/api/audio/audience-public", 200}} {
+		response, err := http.Get(publicServer.URL + tc.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		response.Body.Close()
+		if response.StatusCode != tc.status {
+			t.Fatal(tc.path, response.StatusCode)
+		}
+	}
+	approval.Approved = false
+	if err = db.ApprovePublic(ctx, pub.Recording.ID, approval); err != nil {
+		t.Fatal(err)
+	}
+	response, err := http.Get(publicServer.URL + "/api/audio/audience-public")
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != 404 {
+		t.Fatal("revoked audio still served", response.StatusCode)
+	}
 	entries, err := db.Entries(ctx)
 	if err != nil {
 		t.Fatal(err)

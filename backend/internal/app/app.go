@@ -25,7 +25,7 @@ type Server struct {
 func (s *Server) Handler() http.Handler {
 	m := http.NewServeMux()
 	m.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
-		write(w, http.StatusOK, map[string]string{"status": "ok", "revision": s.Revision})
+		write(w, http.StatusOK, map[string]string{"status": "ok", "revision": s.Revision, "audience": s.audience()})
 	})
 	m.HandleFunc("GET /api/ready", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -138,7 +138,9 @@ func (s *Server) audio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("ETag", `"`+e.SHA256+`"`)
-	w.Header().Set("Cache-Control", "private, max-age=3600")
+	if !s.DB.Public {
+		w.Header().Set("Cache-Control", "private, max-age=3600")
+	}
 	http.ServeContent(w, r, e.Media, stat.ModTime(), f)
 }
 func (s *Server) station(w http.ResponseWriter, r *http.Request) {
@@ -164,4 +166,11 @@ func (s *Server) station(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	write(w, 200, state)
+}
+
+func (s *Server) audience() string {
+	if s.DB.Public {
+		return "public"
+	}
+	return "private"
 }

@@ -15,7 +15,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DB struct{ Pool *pgxpool.Pool }
+type DB struct {
+	Pool   *pgxpool.Pool
+	Public bool
+}
 
 func Open(ctx context.Context, url string) (*DB, error) {
 	p, err := pgxpool.New(ctx, url)
@@ -26,7 +29,7 @@ func Open(ctx context.Context, url string) (*DB, error) {
 		p.Close()
 		return nil, err
 	}
-	return &DB{p}, nil
+	return &DB{Pool: p}, nil
 }
 func (d *DB) Migrate(ctx context.Context, dir string) error {
 	c, err := d.Pool.Acquire(ctx)
@@ -110,7 +113,7 @@ func (d *DB) Import(ctx context.Context, r music.Recording, raw []byte) error {
 	return tx.Commit(ctx)
 }
 func (d *DB) Entries(ctx context.Context) (map[string]music.Entry, error) {
-	rows, err := d.Pool.Query(ctx, `SELECT source,review,media,media_sha256,source_hash,playback FROM recordings ORDER BY id`)
+	rows, err := d.Pool.Query(ctx, `SELECT source,review,media,media_sha256,source_hash,playback FROM recordings WHERE `+d.publicPredicate()+` ORDER BY id`)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +147,12 @@ func (d *DB) Entries(ctx context.Context) (map[string]music.Entry, error) {
 		}
 		if e.Review.ConcertID != "" {
 			e.Recording.ConcertID = e.Review.ConcertID
+		}
+		if d.Public {
+			e.Review.PrivateOnly = false
+			e.Review.Relay = true
+			e.Review.Acquisition = false
+			e.Review.Notes = "Approved noncommercial audience-recording playback and scheduled relay. Source warnings and credits remain with the recording."
 		}
 		out[e.Recording.ID] = e
 	}
