@@ -17,9 +17,11 @@ class PublicMaintenanceTests(unittest.TestCase):
         seen = []
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
+                assert self.headers['User-Agent'] == 'Dedhed-public-monitor/1.0'
                 code = statuses[min(len(seen), len(statuses) - 1)]
                 seen.append(code)
                 self.send_response(code)
+                self.send_header('content-range', 'bytes 0-4095/69657246')
                 self.end_headers()
                 self.wfile.write(b'failed response' if code != 200 else json.dumps({'ready': True}).encode())
             def log_message(self, *_):
@@ -34,7 +36,9 @@ class PublicMaintenanceTests(unittest.TestCase):
     def test_transient_response_does_not_contaminate_retry(self):
         url, seen = self.response_server([503, 200])
         with patch.object(runtime.time, 'sleep'):
-            self.assertEqual(json.loads(runtime.request(url)[2]), {'ready': True})
+            _, headers, body = runtime.request(url)
+            self.assertEqual(json.loads(body), {'ready': True})
+            self.assertEqual(headers['content-range'], 'bytes 0-4095/69657246')
         self.assertEqual(seen, [503, 200])
 
     def test_access_rejection_remains_visible_without_retry(self):

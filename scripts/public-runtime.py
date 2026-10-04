@@ -28,8 +28,8 @@ def digest(path):
 def request(url, headers=None):
     for attempt in range(3):
         try:
-            with urlopen(Request(url, headers=headers or {}), timeout=15) as r:
-                return r.status, dict(r.headers), r.read(1024 * 1024)
+            with urlopen(Request(url, headers={'User-Agent': 'Dedhed-public-monitor/1.0', **(headers or {})}), timeout=15) as r:
+                return r.status, {key.lower(): value for key, value in r.headers.items()}, r.read(1024 * 1024)
         except HTTPError as e:
             if e.code not in (429, 500, 502, 503, 504) or attempt == 2:
                 raise RuntimeError(f'{url}: HTTP {e.code}') from e
@@ -59,7 +59,7 @@ def monitor(config):
         raise RuntimeError('station server time is stale')
     for item in sorted(expected):
         status, headers, body = request(base + '/api/audio/' + item, {'Range': 'bytes=0-4095'})
-        if status != 206 or len(body) != 4096 or not headers.get('Content-Range', '').startswith('bytes 0-4095/'):
+        if status != 206 or len(body) != 4096 or not headers.get('content-range', '').startswith('bytes 0-4095/'):
             raise RuntimeError(f'approved audio range unavailable: {item}')
     return {'recordings': len(expected), 'schedule_revision': station['revision'], 'offset': offset}
 

@@ -1,6 +1,6 @@
 # Dedhed
 
-> Two-recording public pilot approved; deployment qualification is underway.
+> Free two-recording public pilot: [dedhed.subcult.tv](https://dedhed.subcult.tv).
 
 ![Dedhed: Find your way into a show. A shelf of sample concert-tape labels; private pilot.](docs/assets/readme/banner.png)
 
@@ -10,7 +10,7 @@ Dedhed is a Grateful Dead concert-tape library with on-demand shows and sets,
 plus a shared radio schedule. Date, venue, recording credits and source notes
 stay on the label.
 
-**The owner approved a free public pilot with the reviewed Fillmore East and Barton Hall audience recordings.** Its [release runbook](docs/runbooks/public-pilot.md) records the exact scope, public approval controls and withdrawal procedure. Deployment and natural maintenance evidence remain separate.
+**The owner approved a free public pilot with the reviewed Fillmore East and Barton Hall audience recordings.** Its [release runbook](docs/runbooks/public-pilot.md) records the exact scope, public approval controls and withdrawal procedure. The pilot is deployed on Almaz. Complete HTTPS audio delivery and an independent restore passed; daily natural maintenance and longer stability remain under observation. See the [public release evidence](docs/reports/public-pilot-2026-10-04.md).
 
 ## Two ways to listen
 
