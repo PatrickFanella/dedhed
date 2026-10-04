@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@subcult/archive-viewer':
+        specifier: 0.2.1
+        version: 0.2.1(react@19.3.0)
       react:
         specifier: ^19.2.0
         version: 19.3.0
@@ -508,6 +511,11 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@subcult/archive-viewer@0.2.1':
+    resolution: {integrity: sha512-ZThiISc6vns/2qJ/sOQkZulv2sGd/RzOevzlvRKt69s83gTnBaBn8+7jZuUlJwiaCgwNne+y8gT2Lgmgp1XQNw==, tarball: https://git.subcult.tv/api/packages/subculture-collective/npm/%40subcult%2Farchive-viewer/-/0.2.1/archive-viewer-0.2.1.tgz}
+    peerDependencies:
+      react: ^19.2.0
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -1567,6 +1575,10 @@ snapshots:
     optional: true
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@subcult/archive-viewer@0.2.1(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
 
   '@types/babel__core@7.20.5':
     dependencies:
