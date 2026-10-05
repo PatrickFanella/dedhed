@@ -44,3 +44,7 @@ the remaining work. Setup and verification are in
 Built by [SUBCULT](https://subcult.tv). Source code is
 [GPL-3.0-only](LICENSE); that license does not cover acquired audio. Dedhed is
 an independent project and does not imply official endorsement.
+
+The original frontend remains in this repository. A versioned headless Arkhiv
+engine can serve it through the [shared-core release runbook](docs/runbooks/shared-core-release.md),
+with an immutable pin and independently verified upgrades.
