@@ -4,7 +4,7 @@ export { clock, setBounds, currentTrack } from '@subcult/archive-viewer/audio';
 export type Entry = { recording: Recording; review: { notes: string }; media: string };
 export type Program = { recording_id: string; start: string; duration: number };
 export type Station = { server_time: string; revision: string; program: Program; offset: number; track: number; next?: Program };
-export type Playback = { entry: Entry; mode: 'radio' | 'on-demand'; start: number; end: number; label: string; station?: Station };
+export type Playback = { entry: Entry; mode: 'radio' | 'on-demand'; start: number; end: number; label: string; station?: Station; receivedAt?: number; latency?: number };
 
 export type SourceItem = {
   id: string; show_date: string; date_text: string; artist: string; venue: string; location: string; title: string;
