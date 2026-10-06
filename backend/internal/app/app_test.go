@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -175,6 +176,51 @@ func TestPublishedAudioRangeAndSourceOutage(t *testing.T) {
 	response.Body.Close()
 	if response.StatusCode != 404 {
 		t.Fatal("revoked audio still served", response.StatusCode)
+	}
+	// More than one page makes accidental page-local filtering observable.
+	for i := 0; i < 27; i++ {
+		recording := alternate.Recording
+		recording.ID = fmt.Sprintf("filter-fixture-%02d", i)
+		recording.Venue = "Filter venue"
+		recording.Date = "1977-05-08"
+		recording.Taper = "Filter credit"
+		if i == 26 {
+			recording.Date = "1977"
+		}
+		if err = db.Import(ctx, recording, []byte(`{"synthetic_filter_fixture":true}`)); err != nil {
+			t.Fatal(err)
+		}
+		if err = db.Media(ctx, recording.ID, alternate.Media, alternate.SHA256, nil); err != nil {
+			t.Fatal(err)
+		}
+		if err = db.Review(ctx, recording.ID, alternate.Review); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, query := range []struct {
+		path                 string
+		status, total, count int
+	}{
+		{"/api/recordings?venue=Filter&q=credit&date_from=1977-01-01&date_to=1977-12-31&page=2", 200, 26, 6},
+		{"/api/recordings?venue=Filter&page=2", 200, 27, 7},
+		{"/api/recordings?date_from=1977-02-30", 400, 0, 0},
+		{"/api/recordings?date_from=1989-01-01&date_to=1977-01-01", 400, 0, 0},
+	} {
+		response, err := http.Get(server.URL + query.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var result struct {
+			Items []music.Entry `json:"items"`
+			Total int           `json:"total"`
+		}
+		if query.status == 200 {
+			err = json.NewDecoder(response.Body).Decode(&result)
+		}
+		response.Body.Close()
+		if response.StatusCode != query.status || err != nil || result.Total != query.total || len(result.Items) != query.count {
+			t.Fatal(query.path, response.StatusCode, result, err)
+		}
 	}
 	entries, err := db.Entries(ctx)
 	if err != nil {

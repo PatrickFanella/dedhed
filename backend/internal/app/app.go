@@ -72,6 +72,24 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 	}
 	q := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
 	year := r.URL.Query().Get("year")
+	venue := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("venue")))
+	from, to := r.URL.Query().Get("date_from"), r.URL.Query().Get("date_to")
+	if len(q) > 200 || len(venue) > 200 || year != "" && (len(year) != 4 || strings.Trim(year, "0123456789") != "") {
+		write(w, 400, map[string]string{"error": "Use a four-digit year and at most 200 search characters."})
+		return
+	}
+	for _, value := range []string{from, to} {
+		if value != "" {
+			if _, err := time.Parse("2006-01-02", value); err != nil {
+				write(w, 400, map[string]string{"error": "Use complete YYYY-MM-DD date bounds."})
+				return
+			}
+		}
+	}
+	if from != "" && to != "" && from > to {
+		write(w, 400, map[string]string{"error": "The original-date range is reversed."})
+		return
+	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page < 1 {
 		page = 1
@@ -83,7 +101,16 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 	list := []music.Entry{}
 	for _, e := range entries {
 		m := e.Recording
-		if eligible(e) && (q == "" || strings.Contains(strings.ToLower(m.Title+" "+m.Venue+" "+m.Location+" "+m.Date), q)) && (year == "" || strings.HasPrefix(m.Date, year)) {
+		completeDate := len(m.Date) == 10
+		if completeDate {
+			_, err := time.Parse("2006-01-02", m.Date)
+			completeDate = err == nil
+		}
+		text := m.Title + " " + m.Venue + " " + m.Location + " " + m.Date + " " + m.Artist + " " + m.Source + " " + m.Taper + " " + m.Transferer
+		for _, track := range m.Tracks {
+			text += " " + track.Title
+		}
+		if eligible(e) && (q == "" || strings.Contains(strings.ToLower(text), q)) && (year == "" || strings.HasPrefix(m.Date, year)) && (venue == "" || strings.Contains(strings.ToLower(m.Venue), venue)) && (from == "" || completeDate && m.Date >= from) && (to == "" || completeDate && m.Date <= to) {
 			list = append(list, e)
 		}
 	}

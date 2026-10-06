@@ -107,3 +107,11 @@ reviews, bind source and media hashes, and filter every audience-facing catalog,
 search/calendar, audio and station lookup. Daily renewal verifies the exact
 approved audio before replacing the schedule. Deployment, hosted checks,
 independent public restore passed. Natural daily runs remain pending. See the [release evidence](docs/reports/public-pilot-2026-10-04.md).
+
+## Audio viewer follow-up
+
+Issue #33 adds volume/mute persistence, accessible narrow controls, original-date
+and venue filters before pagination, tape-rack/table browsing, local favorites,
+sharing and listening focus. Radio has read-only position, measured replay states
+and fresh current-program resume/rejoin. On-demand keeps seeking and reviewed
+set/track controls. Viewer actions never write the shared timeline.
