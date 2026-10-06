@@ -19,3 +19,19 @@ Injecting a missing audio URL produced an actual HTTP 404, an unavailable label 
 Browser controls stored volume 0.3 and mute across remounts and mode changes. Both controls were visible in the 390px frame; the page width was 384px. This is desktop-browser responsive evidence, not physical-device testing. Tape-rack/table switching retained the cassette details, metadata and source credits. A saved favorite survived reload, an unavailable reference remained visible and removable, and manual share fallback exposed the recording link. Listening focus activated and Escape restored the page.
 
 Synthetic tones qualify control behavior and timing. They do not prove human listening to every real concert segue or complete-corpus audiovisual fidelity. Those acceptance requirements remain tracked in the real-pilot issues. The preview is stopped with development data retained. No acquisition, schedule edit, new public approval or live provider activation occurred.
+
+
+## Published follow-up adoption
+
+The consumer now independently pins SDK 0.4.0 and core 0.3.0 from Arkhiv source
+39a49fb45005b001e14218823c22ed19c3de1177. SDK registry bytes were independently
+downloaded and verified against its SHA-256 receipt. The immutable core receipt
+updates the compatibility browse filters and optional media-specific chat storage.
+The native backend and current deployment remain independently owned; this pin
+update does not perform live migration or activate account/chat hosting.
+
+Full `make verify` passed in an isolated T3 snapshot for these exact dependency
+locks and core receipt. The print dump/restore checks used an explicitly
+disposable PostgreSQL 15 service matching the tools image's pg_dump client; the
+earlier PostgreSQL 17 client mismatch was a launcher failure, not a passing test.
+Hosted CI remains owner-waived during the Kvant outage.
