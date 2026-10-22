@@ -215,7 +215,7 @@ export default function App() {
     </main>
 
     <section className={`deck ${playing ? 'is-playing' : ''}`} aria-label="Audio player">
-      <audio ref={audio} preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPlayerFailure('unavailable'); setPending(false); setPlaying(false); setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }} onEnded={controls.events.onEnded} />
+      <audio ref={audio} crossOrigin="anonymous" preload="metadata" onLoadedMetadata={metadataReady} onTimeUpdate={timeUpdate} onPlaying={() => { setPlaying(true); setPending(false); setPlayerError(''); }} onPause={() => setPlaying(false)} onWaiting={() => setPending(true)} onError={() => { setPlayerFailure('unavailable'); setPending(false); setPlaying(false); setPlayerError("The audio source isn't answering. Try again, or pull another tape."); }} onEnded={controls.events.onEnded} />
       {playerError && <p className="player-error" role="alert">{playerError} {playback && <button onClick={() => { if (playback.mode === 'radio') void tune(); else void load(playback, Math.max(playback.start, Math.min(position, playback.end - 0.1))); }}>Try again</button>}</p>}
       <div className="deck-actions">
         <button className="key" aria-pressed={focus} onClick={()=>{setFocus(!focus);if(route.view!=='home')location.hash='/';}}>{focus?'Exit listening focus':'Listening focus'}</button>
