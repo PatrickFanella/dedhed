@@ -31,6 +31,7 @@ def request(url, headers=None):
             with urlopen(Request(url, headers={'User-Agent': 'Dedhed-public-monitor/1.0', **(headers or {})}), timeout=15) as r:
                 return r.status, {key.lower(): value for key, value in r.headers.items()}, r.read(1024 * 1024)
         except HTTPError as e:
+            e.close()
             if e.code not in (429, 500, 502, 503, 504) or attempt == 2:
                 raise RuntimeError(f'{url}: HTTP {e.code}') from e
         except URLError as e:

@@ -75,7 +75,7 @@ export default function App() {
   async function load(next: Playback, target: number) {
     const a = audio.current; if (!a) return;
     const token = operation.current; advancing.current = false; stopAudio(); pendingSeek.current = target; setPlayback(next); controls.reset(target);
-    a.src = `/api/audio/${encodeURIComponent(next.entry.recording.id)}`; a.volume = volume; a.load();
+    a.src = `/api/audio/${encodeURIComponent(next.entry.recording.id)}`; a.load();
     try { await a.play(); } catch (e) { if (token === operation.current && e instanceof Error && e.name !== 'AbortError') {setPlayerFailure(e.name==='NotAllowedError'?'blocked':'unavailable');setPlayerError("The tape didn't start. Press play to try again.");} }
   }
   async function playSet(entry: Entry, set?: SetList, trackStart?: number) {
@@ -186,7 +186,7 @@ export default function App() {
               </div>
               <div className="controls">
                 <button className="key primary" onClick={() => { void playSet(selected); }}>▶ Full recording · {clock(r.duration)}</button>
-                {r.sets.filter(s => s.reviewed).map((set, i) => <button className="key ghost" key={set.title} onClick={() => { void playSet(selected, set); }}>▶ {ROMAN[i] ?? set.title}</button>)}
+                {r.sets.filter(s => s.reviewed).map((set, i) => <button className="key ghost" key={`${set.first}-${set.last}`} onClick={() => { void playSet(selected, set); }}>▶ {ROMAN[i] ?? set.title}</button>)}
               </div>
             </div>
             <section className="jcard" aria-label="Sets and tracks">
