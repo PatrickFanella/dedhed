@@ -13,6 +13,7 @@ import (
 	"git.subcult.tv/subculture-collective/dedhed/internal/catalog"
 	"git.subcult.tv/subculture-collective/dedhed/internal/fixture"
 	"git.subcult.tv/subculture-collective/dedhed/internal/music"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestShowIndexEndpoints(t *testing.T) {
@@ -102,4 +103,28 @@ func TestShowIndexEndpoints(t *testing.T) {
 		t.Fatalf("%+v", found)
 	}
 	get("/api/shows?year=19", 400)
+}
+
+func TestDateHandlerWithoutCatalog(t *testing.T) {
+	// A malformed date is refused before the catalog is consulted; a well-formed
+	// date with an unreachable catalog is reported as unavailable, not as a bad date.
+	pool, err := pgxpool.New(context.Background(), "postgres://127.0.0.1:1/unreachable?connect_timeout=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	srv := httptest.NewServer((&Server{DB: &catalog.DB{Pool: pool}}).Handler())
+	defer srv.Close()
+	for path, want := range map[string]int{"/api/dates/1977-5-8": 400, "/api/dates/19770508": 400, "/api/dates/1977-05-08": 503} {
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		resp.Body.Close()
+		if resp.StatusCode != want || out["error"] == "" {
+			t.Fatalf("%s: %d %q", path, resp.StatusCode, out["error"])
+		}
+	}
 }

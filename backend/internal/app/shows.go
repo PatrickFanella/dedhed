@@ -47,9 +47,14 @@ type DateItem struct {
 
 func (s *Server) date(w http.ResponseWriter, r *http.Request) {
 	date := r.PathValue("date")
+	if !catalog.DateShape.MatchString(date) {
+		write(w, 400, map[string]string{"error": "That isn't a date the calendar can read."})
+		return
+	}
 	items, err := s.DB.ItemsOn(r.Context(), date)
 	if err != nil {
-		write(w, 400, map[string]string{"error": "That isn't a date the calendar can read."})
+		slog.Error("date read failed", "error", err)
+		write(w, 503, map[string]string{"error": "The show index isn't answering. Try again in a moment."})
 		return
 	}
 	entries, ok := s.entries(w, r)

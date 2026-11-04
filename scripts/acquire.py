@@ -94,6 +94,8 @@ def acquire(recording, review, root, total_cap=1024 * 1024 * 1024, file_cap=250 
                         target = originals / (digest(part) + '.mp3'); os.replace(part, target); target.chmod(0o600)
                         break
                     except (urllib.error.URLError, TimeoutError, OSError) as error:
+                        if isinstance(error, urllib.error.HTTPError):
+                            error.close()
                         if attempt == 3:
                             raise
                         if isinstance(error, urllib.error.HTTPError) and error.code not in (429, 500, 502, 503, 504):

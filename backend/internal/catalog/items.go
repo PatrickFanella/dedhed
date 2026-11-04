@@ -12,7 +12,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var dateShape = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+// DateShape is the calendar date form accepted by date lookups.
+var DateShape = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 func nullDate(s string) any {
 	if s == "" {
@@ -131,7 +132,7 @@ func scanItem(rows pgx.CollectableRow) (music.SourceItem, error) {
 
 // ItemsOn returns every item for one show date, best rated and most downloaded first.
 func (d *DB) ItemsOn(ctx context.Context, date string) ([]music.SourceItem, error) {
-	if !dateShape.MatchString(date) {
+	if !DateShape.MatchString(date) {
 		return nil, fmt.Errorf("invalid date")
 	}
 	rows, err := d.Pool.Query(ctx, `SELECT `+itemColumns+` FROM source_items WHERE `+d.publicPredicate()+` AND show_date=$1::date ORDER BY avg_rating DESC, downloads DESC, id`, date)
