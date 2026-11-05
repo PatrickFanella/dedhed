@@ -59,3 +59,7 @@ verified native-to-canonical identity mapping and a separate provider decision.
 No acquisition, approval or deployment changes are included.
 
 The [viewer qualification report](docs/reports/viewer-feedback-2026-10-06.md) records local verification and browser evidence.
+
+[Automatic public frontend delivery](docs/runbooks/automatic-frontend.md) connects
+verified main CI to the existing Almaz frontend. Shared-core, preservation and
+media access procedures retain their independent release gates.
