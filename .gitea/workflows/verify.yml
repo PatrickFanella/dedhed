@@ -1,15 +1,18 @@
 name: verify
+# Pull request verification runs on the GitHub organization mirror
+# (.github/workflows/mirror-ci.yml) and reports back as
+# "GitHub CI / Mirror CI gate". This workflow verifies and deploys main.
 on:
   push:
     branches: [main]
   workflow_dispatch:
-  pull_request:
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # This workflow deploys; never cancel a run that may be mid-deploy.
+  cancel-in-progress: false
 
 jobs:
   verify:

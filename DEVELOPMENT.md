@@ -19,8 +19,10 @@ they are not actual concerts. Application/test networks cannot acquire music.
 acquisition policy tests, Go formatting/vet/race tests/build, TypeScript, ESLint,
 web tests, and the production web build. Database integration tests run only
 with an explicitly disposable `TEST_DATABASE_URL`; the launcher supplies it.
-The Gitea workflow uses its own PostgreSQL 17 service. Hosted CI and rendered
-playback qualification remain separate proof.
+Pull requests run the same gate, with their own PostgreSQL 17 service, in
+`.github/workflows/mirror-ci.yml` on the GitHub organization mirror; it reports
+back to Gitea as `GitHub CI / Mirror CI gate`. The Gitea workflow verifies and
+deploys `main`. Rendered playback qualification remains separate proof.
 
 For manual setup, use the nonsecret `.env.example` values with a disposable DB,
 install web dependencies, and download Go modules. From `backend/`:
