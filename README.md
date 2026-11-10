@@ -1,65 +1,106 @@
 # Dedhed
 
-> Free two-recording public pilot: [dedhed.subcult.tv](https://dedhed.subcult.tv).
-
-![Dedhed: Find your way into a show. A shelf of sample concert-tape labels; private pilot.](docs/assets/readme/banner.png)
+![Dedhed: a shelf of sample concert-tape labels](docs/assets/readme/banner.png)
 
 **Pull a tape off the shelf, or tune in to what everyone else is hearing.**
 
-Dedhed is a Grateful Dead concert-tape library with on-demand shows and sets,
-plus a shared radio schedule. Date, venue, recording credits and source notes
-stay on the label.
+Dedhed is a concert-tape library for Grateful Dead recordings from Internet Archive, with a shared radio station. Date, venue, recording credits and source notes stay on the label.
 
-**The owner approved a free public pilot with the reviewed Fillmore East and Barton Hall audience recordings.** Its [release runbook](docs/runbooks/public-pilot.md) records the exact scope, public approval controls and withdrawal procedure. The pilot is deployed on Almaz. Complete HTTPS audio delivery and an independent restore passed; daily natural maintenance and longer stability remain under observation. See the [public release evidence](docs/reports/public-pilot-2026-10-04.md).
+It is a limited public pilot. Two reviewed audience recordings can be played, Fillmore East and Barton Hall; the rest of the show index is metadata only. The tapes in the banner are sample labels, not a list of what you can play.
 
-## Two ways to listen
+Public pilot: https://dedhed.subcult.tv
 
-Pick a reviewed recording and play a set or a whole show. Your pause, seek and
-track changes affect your playback only.
+## Features
 
-Or choose **Tune in**. The station follows its own persisted schedule, so
-listeners join the current program instead of starting a separate copy.
+- **Play a tape.** Pick a reviewed recording and play a whole show or a single set. Pause, seek and track changes affect only your playback.
+- **Tune in.** The station follows its own saved schedule, so every listener joins the same program at the same point instead of starting their own copy.
+- **Read the label.** Credits, track order and uncertain set boundaries stay visible.
+- **Show index.** Browse the collection by calendar, open a date page, see "On this day" across years, or search the whole index. An entry in the index does not mean the recording can be played.
+- **Favorites and sharing.** Favorites are saved in your browser. Share links have a copy fallback and social compose links.
 
-## Read the label
+## Quick start
 
-A metadata-only show index supports calendar browsing, date pages, On this day
-and collection-wide search. An entry in that index does not mean the recording
-is available to play. Playback is limited to reviewed recordings.
+Requirements: Go 1.26 or later, Node.js 24, pnpm 10.33.0 and PostgreSQL 17.
 
-Credits, track order and uncertain set boundaries remain visible. The tapes
-shown in the banner are sample labels, not a promise of those recordings in
-the pilot. Development previews use clearly labeled synthetic test tones.
+Copy [`.env.example`](.env.example) to `.env` and point `DATABASE_URL` at a disposable database. The backend does not read `.env` itself, so export it first. Then, from `backend/`:
 
-## About the pilot
+```sh
+set -a; . ../.env; set +a
+go run ./cmd/dedhed migrate
+go run ./cmd/dedhed seed
+go run ./cmd/dedhed serve
+```
 
-Real listening qualification and public relay are separate decisions; source
-availability does not grant permission to rebroadcast a recording.
+`seed` loads clearly labeled synthetic test tones, not real concerts, and does not replace an existing station schedule. In another shell:
 
-The [pilot evidence report](docs/reports/private-pilot-2026-10-02.md) records
-qualification and open listening criteria. The [roadmap](ROADMAP.md) and
-[Gitea issues](https://git.subcult.tv/subculture-collective/dedhed/issues) track
-the remaining work. Setup and verification are in
-[DEVELOPMENT.md](DEVELOPMENT.md).
+```sh
+pnpm --dir web install --frozen-lockfile
+pnpm --dir web dev
+```
 
-Built by [SUBCULT](https://subcult.tv). Source code is
-[GPL-3.0-only](LICENSE); that license does not cover acquired audio. Dedhed is
-an independent project and does not imply official endorsement.
+Vite serves the app on port 5173 and forwards `/api` to `127.0.0.1:8080`. Set `DEDHED_API` to use another API origin.
 
-The original frontend remains in this repository. A versioned headless Arkhiv
-engine can serve it through the [shared-core release runbook](docs/runbooks/shared-core-release.md),
-with an immutable pin and independently verified upgrades.
+Checks:
 
-## Viewer feedback, October 6
+```sh
+make verify             # source pins, doc links, Python tests, Go format/vet/race tests/build, web typecheck/lint/tests/build
+make test               # Go and web tests only
+make test-integration   # database tests; needs a disposable TEST_DATABASE_URL
+```
 
-The product independently pins shared viewer 0.4.0. Its native backend and core
-pins remain independent. Browser favorites are scoped to this product or selected
-collection and retain removable unavailable references. Sharing has a selectable
-copy fallback and social compose links. Optional account activation requires a
-verified native-to-canonical identity mapping and a separate provider decision.
-No acquisition, approval or deployment changes are included.
+## API
 
-The [viewer qualification report](docs/reports/viewer-feedback-2026-10-06.md) records local verification and browser evidence.
+All public HTTP routes are read-only. Changes go through the `dedhed` CLI.
 
-[Automatic public frontend delivery](docs/runbooks/automatic-frontend.md) connects
-verified main CI to the existing Almaz frontend. Shared-core, preservation and
-media access procedures retain their independent release gates.
+| Route | Purpose |
+| --- | --- |
+| `GET /api/health`, `GET /api/ready` | Process health and database readiness |
+| `GET /api/recordings`, `GET /api/recordings/{id}` | Playable recordings and their tracks |
+| `GET /api/audio/{id}` | Audio for a reviewed track |
+| `GET /api/station` | The station's current program and position |
+| `GET /api/shows`, `GET /api/calendar`, `GET /api/dates/{date}`, `GET /api/on-this-day` | Show index, calendar, date pages and On this day |
+
+The CLI commands are `migrate`, `seed`, `discover`, `inventory-scrape`, `inventory-fetch`, `inventory-import`, `import`, `review`, `public-review`, `public-schedule`, `media`, `schedule`, `report` and `serve`. Source discovery fetches metadata only. Audio is acquired only for recordings that have been reviewed, by the separate `scripts/acquire.py` tool.
+
+## Configuration
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `API_ADDR` | Listen address for `serve` |
+| `DEDHED_MEDIA` | Folder of acquired audio |
+| `DEDHED_MIGRATIONS` | Folder of SQL migrations |
+| `DEDHED_REVISION` | Revision string reported by the server |
+| `VITE_DEDHED_AUDIENCE` | Web build audience, `private` by default |
+
+## Deploy
+
+The repository builds two images:
+
+- [`backend/Dockerfile`](backend/Dockerfile): the `dedhed` binary and migrations. It runs `dedhed serve` on port 8080 and reads audio from `/media`.
+- [`web/Dockerfile`](web/Dockerfile): the static frontend on nginx. Pass `--build-arg VITE_DEDHED_AUDIENCE=public` for a public build.
+
+Run `dedhed migrate` against your database before starting the API, mount the media folder, and serve the frontend over HTTPS with `/api` proxied to the API. Keep audio and database state outside the repository.
+
+The frontend can also run against SUBCULT's shared archive engine instead of the bundled Go API. [`deploy/core-compose.yml`](deploy/core-compose.yml) and the pinned image in [`deploy/archive-core.env`](deploy/archive-core.env) describe that setup.
+
+## Project layout
+
+```text
+backend/     Go API and CLI (cmd/dedhed, internal/)
+web/         React and Vite frontend
+migrations/  SQL migrations
+scripts/     Source checks, audio acquisition, recovery and monitoring tools
+deploy/      Shared-engine Compose file and version pins
+docs/        Design system, plans and reference notes
+```
+
+## Contributing
+
+- Bugs and feature requests: [GitHub issues](https://github.com/subculture-collective/dedhed/issues).
+- Questions and ideas: [GitHub Discussions](https://github.com/subculture-collective/dedhed/discussions).
+- Code: pull requests on GitHub against `main`. CI runs `make verify` with its own PostgreSQL 17 database and builds the public frontend image on every pull request. Both must pass.
+
+## License
+
+The source code is licensed under GPL-3.0-only. See [LICENSE](LICENSE). The license does not cover the recordings, which keep their own terms. Dedhed is an independent project and is not endorsed by the Grateful Dead or the tapers.
