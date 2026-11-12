@@ -5,7 +5,7 @@ Observation date: 2026-10-02.
 
 Delivery tracking: [roadmap](../../ROADMAP.md), with linked implementation issues
 and milestone exit gates. This document preserves the design and source evidence;
-Gitea issues track current task state and acceptance results.
+GitHub issues track current task state and acceptance results.
 
 ## Listener experience
 

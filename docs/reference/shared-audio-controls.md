@@ -1,8 +1,9 @@
 # Shared audio controls
 
-The Tape Shelf interface pins `@subcult/archive-viewer/audio` 0.2.1 for transport
-controls, track timing and reviewed set bounds. The immutable package receipt is
-`docs/releases/archive-viewer-0.2.1.json`.
+The Tape Shelf interface uses `@subcult/archive-viewer/audio` for transport
+controls, track timing and reviewed set bounds. The pinned version and its
+package receipt are in `deploy/viewer-release.json`, checked by
+`scripts/check_viewer_pin.py`.
 
 Dedhed owns its catalog, calendar, cassette interface, recording URLs, radio
 schedule, credits and access policy. Its source and review records remain in the
