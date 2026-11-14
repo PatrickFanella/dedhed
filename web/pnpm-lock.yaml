@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@subcult/archive-viewer':
-        specifier: 0.4.8
-        version: 0.4.8(react@19.3.1)
+        specifier: 0.4.9
+        version: 0.4.9(react@19.3.1)
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -510,8 +510,8 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@subcult/archive-viewer@0.4.8':
-    resolution: {integrity: sha512-K+viMvwr+2Wg5Nzr97ypNjH2yx4eI6Gve/SXcrsoOH0KpJUQC/8LZuDKiBfy/ZCjyUWKoQh9ZIGpak8J8Q90Rg==}
+  '@subcult/archive-viewer@0.4.9':
+    resolution: {integrity: sha512-yVEaYlYy9qFMPFkZeU6VCKPh5RZp4KDTuiOcgAE59kDgPslb5s8rfLNblFkvjG/+ZfUlTLMz5P7huzDJJDo8UQ==}
     peerDependencies:
       react: ^19.2.0
 
@@ -1574,7 +1574,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@subcult/archive-viewer@0.4.8(react@19.3.1)':
+  '@subcult/archive-viewer@0.4.9(react@19.3.1)':
     dependencies:
       react: 19.3.1
 
