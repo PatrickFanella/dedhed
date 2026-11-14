@@ -1,9 +1,9 @@
 {
   "package": "@subcult/archive-viewer",
-  "version": "0.4.7",
-  "source_revision": "a237875ad16ee28a0b4e5dc9e6ef84429528179a",
-  "package_file": "subcult-archive-viewer-0.4.7.tgz",
-  "package_sha256": "2216554e1828cfdedbab5e2645e92efeb67ea0c74cec03704de770e8bfb36801",
+  "version": "0.4.8",
+  "source_revision": "df7d836c9c9b3a30de3ba110fe8bec2a89637cf7",
+  "package_file": "subcult-archive-viewer-0.4.8.tgz",
+  "package_sha256": "aa449bc29855b0b95dc1b9ad641461508e4c35bb0477e540a03e65a1ada8cbd4",
   "license": "GPL-3.0-only",
   "scope": "Frontend SDK patch; core artifacts are versioned independently",
   "compatible_core_receipt": "core-release-0.3.0.json",
